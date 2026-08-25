@@ -1,0 +1,16 @@
+{
+  "name": "Vero — Rotina & Bem-estar",
+  "short_name": "Vero",
+  "description": "Aplicativo pessoal de rotina, alimentação, hidratação, movimento e bem-estar.",
+  "id": "/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B0E1F",
+  "theme_color": "#0B0E1F",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

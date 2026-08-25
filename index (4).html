@@ -1,0 +1,3410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vero — Rotina &amp; Bem-estar</title>
+<meta name="description" content="Aplicativo pessoal de rotina, alimentação, hidratação, movimento e bem-estar.">
+
+<!-- ===================== PWA — FINAL ===================== -->
+<meta name="theme-color" content="#0B0E1F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vero">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<!-- iOS não renderiza SVG como apple-touch-icon: gerar icon-180.png (e ícones do
+     manifest em 192/512px) a partir de icon.svg antes de publicar. Ver notas de entrega. -->
+
+
+<!-- ===================== FONTES ===================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ===================== SUPABASE CLIENT (CDN) ===================== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<style>
+/* =========================================================================
+   1. DESIGN TOKENS — BASE (independentes de tema)
+   ========================================================================= */
+:root{
+  --font-display:'Fraunces', Georgia, serif;
+  --font-body:'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:24px;
+  --radius-full:999px;
+
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:24px;
+  --space-6:32px;
+  --space-7:48px;
+  --space-8:64px;
+
+  --fs-scale:1;
+  --fs-xs:calc(0.75rem * var(--fs-scale));
+  --fs-sm:calc(0.875rem * var(--fs-scale));
+  --fs-md:calc(1rem * var(--fs-scale));
+  --fs-lg:calc(1.25rem * var(--fs-scale));
+  --fs-xl:calc(1.75rem * var(--fs-scale));
+  --fs-2xl:calc(2.25rem * var(--fs-scale));
+
+  --dur-fast:120ms;
+  --dur-base:220ms;
+  --dur-slow:420ms;
+  --ease:cubic-bezier(.4,0,.2,1);
+
+  --shadow-sm:0 2px 8px rgba(0,0,0,.18);
+  --shadow-md:0 8px 24px rgba(0,0,0,.28);
+  --shadow-glow:0 0 32px var(--glow);
+
+  --anim-scale:1; /* controlada por "reduzir animações" */
+}
+
+/* =========================================================================
+   2. TEMAS — cada tema define cor/atmosfera. Estrutura idêntica entre todos.
+   ========================================================================= */
+
+/* ---- GALÁXIA ---- */
+[data-theme="galaxy"][data-mode="dark"]{
+  --bg:#0B0E1F; --bg-elevated:#141833; --bg-sunken:#080A16;
+  --text:#E8EAF6; --text-muted:#9AA0C4;
+  --accent:#7C5CFF; --accent-2:#34E4EA;
+  --border:#262C52; --glow:rgba(124,92,255,.35);
+  --grad:linear-gradient(135deg,#7C5CFF 0%,#34E4EA 100%);
+}
+[data-theme="galaxy"][data-mode="light"]{
+  --bg:#F3F2FB; --bg-elevated:#FFFFFF; --bg-sunken:#EAE8F7;
+  --text:#1B1E36; --text-muted:#5A5F82;
+  --accent:#5B3DF0; --accent-2:#0EA5AC;
+  --border:#DAD8F0; --glow:rgba(91,61,240,.22);
+  --grad:linear-gradient(135deg,#5B3DF0 0%,#0EA5AC 100%);
+}
+
+/* ---- NOITE GÓTICA ---- */
+[data-theme="gothic"][data-mode="dark"]{
+  --bg:#0A0810; --bg-elevated:#16111F; --bg-sunken:#060509;
+  --text:#EDE7F6; --text-muted:#A398B5;
+  --accent:#8B5CF6; --accent-2:#3B4A8C;
+  --border:#2A2138; --glow:rgba(139,92,246,.32);
+  --grad:linear-gradient(135deg,#8B5CF6 0%,#3B4A8C 100%);
+}
+[data-theme="gothic"][data-mode="light"]{
+  --bg:#F1EDF7; --bg-elevated:#FFFFFF; --bg-sunken:#E7E1F1;
+  --text:#211934; --text-muted:#6B5E7D;
+  --accent:#6D28D9; --accent-2:#35408A;
+  --border:#DCD3E8; --glow:rgba(109,40,217,.2);
+  --grad:linear-gradient(135deg,#6D28D9 0%,#35408A 100%);
+}
+
+/* ---- FANTASIA ---- */
+[data-theme="fantasy"][data-mode="dark"]{
+  --bg:#14100A; --bg-elevated:#1E1811; --bg-sunken:#0D0A06;
+  --text:#F0E6D2; --text-muted:#B3A184;
+  --accent:#C08A3E; --accent-2:#4B7A51;
+  --border:#34291A; --glow:rgba(192,138,62,.3);
+  --grad:linear-gradient(135deg,#C08A3E 0%,#4B7A51 100%);
+}
+[data-theme="fantasy"][data-mode="light"]{
+  --bg:#F7F1E3; --bg-elevated:#FFFDF7; --bg-sunken:#EFE6CE;
+  --text:#2B2213; --text-muted:#7A6C4E;
+  --accent:#A5702B; --accent-2:#3D6844;
+  --border:#E3D5B0; --glow:rgba(165,112,43,.2);
+  --grad:linear-gradient(135deg,#A5702B 0%,#3D6844 100%);
+}
+
+/* ---- MISTÉRIO ---- */
+[data-theme="mystery"][data-mode="dark"]{
+  --bg:#08090D; --bg-elevated:#121319; --bg-sunken:#050609;
+  --text:#E5E7F0; --text-muted:#8D93A8;
+  --accent:#D6336C; --accent-2:#22D3EE;
+  --border:#23262F; --glow:rgba(34,211,238,.3);
+  --grad:linear-gradient(135deg,#22D3EE 0%,#D6336C 100%);
+}
+[data-theme="mystery"][data-mode="light"]{
+  --bg:#EEF1F5; --bg-elevated:#FFFFFF; --bg-sunken:#E2E6EC;
+  --text:#12141A; --text-muted:#565B6B;
+  --accent:#B0245A; --accent-2:#0891B2;
+  --border:#D6DAE2; --glow:rgba(8,145,178,.18);
+  --grad:linear-gradient(135deg,#0891B2 0%,#B0245A 100%);
+}
+
+/* =========================================================================
+   3. RESET & BASE
+   ========================================================================= */
+*,*::before,*::after{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;
+  transition:background var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
+  overflow-x:hidden;
+}
+[data-anim="off"]{ --anim-scale:0; }
+[data-anim="off"] *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+[data-anim="reduced"]{ --anim-scale:0.35; }
+button,input,select{ font-family:inherit; color:inherit; }
+button{ cursor:pointer; background:none; border:none; }
+img{ max-width:100%; display:block; }
+:focus-visible{ outline:2px solid var(--accent-2); outline-offset:3px; border-radius:6px; }
+h1,h2,h3{ font-family:var(--font-display); font-weight:600; letter-spacing:.2px; }
+
+/* =========================================================================
+   4. LAYOUT SHELL
+   ========================================================================= */
+#app{
+  display:flex; flex-direction:column;
+  min-height:100dvh;
+  max-width:640px; margin:0 auto;
+  position:relative;
+}
+.app-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:var(--space-5) var(--space-5) var(--space-3);
+  gap:var(--space-3);
+}
+.greeting{ display:flex; flex-direction:column; gap:2px; }
+.greeting__hi{ font-size:var(--fs-sm); color:var(--text-muted); }
+.greeting__name{ font-family:var(--font-display); font-size:var(--fs-xl); font-weight:600; }
+.header-actions{ display:flex; align-items:center; gap:var(--space-3); }
+.level-chip{
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg-elevated); border:1px solid var(--border);
+  padding:6px 12px; border-radius:var(--radius-full);
+  font-size:var(--fs-xs); font-weight:700; color:var(--accent-2);
+}
+.sync-badge{
+  display:flex; align-items:center; gap:5px;
+  font-size:10px; font-weight:700; color:var(--text-muted);
+}
+.sync-badge__dot{ width:6px; height:6px; border-radius:50%; background:var(--text-muted); flex-shrink:0; }
+.sync-badge[data-status="online"] .sync-badge__dot{ background:#3FAE6A; }
+.sync-badge[data-status="offline"] .sync-badge__dot{ background:#B3A184; }
+.sync-badge[data-status="syncing"] .sync-badge__dot{ background:var(--accent-2); animation:pulse calc(1s * var(--anim-scale) + .01s) ease-in-out infinite; }
+.sync-badge[data-status="error"] .sync-badge__dot{ background:#C0304A; }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+.icon-btn{
+  width:42px; height:42px; border-radius:var(--radius-full);
+  display:flex; align-items:center; justify-content:center;
+  background:var(--bg-elevated); border:1px solid var(--border);
+  transition:transform var(--dur-fast) var(--ease), background var(--dur-base) var(--ease);
+}
+.icon-btn:hover{ transform:translateY(-1px); }
+.icon-btn:active{ transform:scale(.94); }
+.icon-btn svg{ width:20px; height:20px; stroke:var(--text); fill:none; stroke-width:1.8; }
+
+main#view-root{
+  flex:1;
+  padding:0 var(--space-5) calc(var(--space-8) + 72px);
+}
+.view{ display:none; animation:viewIn calc(var(--dur-slow) * var(--anim-scale)) var(--ease); }
+.view.active{ display:block; }
+@keyframes viewIn{
+  from{ opacity:0; transform:translateY(10px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.section-title{
+  font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:1.4px;
+  color:var(--text-muted); font-weight:700;
+  margin:var(--space-6) 0 var(--space-3);
+}
+.section-title:first-child{ margin-top:0; }
+
+/* =========================================================================
+   5. COMPONENTES — CARTÃO
+   ========================================================================= */
+.card{
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:var(--space-5);
+  transition:transform var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+}
+.card + .card{ margin-top:var(--space-4); }
+.card--hero{
+  position:relative; overflow:hidden;
+  text-align:center;
+  padding:var(--space-6) var(--space-5);
+}
+.card--hero::before{
+  content:''; position:absolute; inset:-40%;
+  background:var(--grad); opacity:.16; filter:blur(60px);
+  animation:heroGlow calc(9s * var(--anim-scale) + .01s) ease-in-out infinite alternate;
+}
+@keyframes heroGlow{
+  from{ transform:rotate(0deg) scale(1); }
+  to{ transform:rotate(25deg) scale(1.15); }
+}
+
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); }
+.summary-card{
+  display:flex; flex-direction:column; gap:var(--space-2);
+}
+.summary-card__icon{
+  width:36px; height:36px; border-radius:var(--radius-sm);
+  display:flex; align-items:center; justify-content:center;
+  background:var(--bg-sunken);
+}
+.summary-card__icon svg{ width:18px; height:18px; stroke:var(--accent-2); fill:none; stroke-width:1.8; }
+.summary-card__label{ font-size:var(--fs-xs); color:var(--text-muted); font-weight:600; }
+.summary-card__value{ font-size:var(--fs-lg); font-weight:700; font-family:var(--font-display); }
+
+/* =========================================================================
+   6. ANEL DE PRESENÇA — elemento assinatura
+   ========================================================================= */
+.presence{ position:relative; width:180px; height:180px; margin:0 auto var(--space-4); }
+.presence__ring{
+  width:100%; height:100%; border-radius:50%;
+  background:conic-gradient(var(--accent) calc(var(--progress,62) * 1%), var(--bg-sunken) 0);
+  display:flex; align-items:center; justify-content:center;
+  transition:background 900ms var(--ease);
+}
+.presence__ring::after{
+  content:''; position:absolute; inset:10px; border-radius:50%;
+  background:var(--bg-elevated); box-shadow:inset 0 0 0 1px var(--border);
+}
+.presence__core{
+  position:relative; z-index:1; text-align:center;
+}
+.presence__core .value{ font-family:var(--font-display); font-size:var(--fs-2xl); font-weight:700; }
+.presence__core .label{ font-size:var(--fs-xs); color:var(--text-muted); }
+.presence__orbit{
+  position:absolute; inset:0; border-radius:50%;
+  animation:spin calc(16s * var(--anim-scale) + .01s) linear infinite;
+}
+.presence__dot{
+  position:absolute; top:-4px; left:50%; width:10px; height:10px; margin-left:-5px;
+  border-radius:50%; background:var(--accent-2); box-shadow:0 0 12px var(--accent-2);
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+.mission{
+  display:flex; align-items:center; gap:var(--space-4);
+  padding:var(--space-4);
+}
+.mission__icon{
+  width:44px; height:44px; border-radius:var(--radius-md);
+  background:var(--grad); display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.mission__icon svg{ width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2; }
+.mission__label{ font-size:var(--fs-xs); color:var(--text-muted); font-weight:600; }
+.mission__text{ font-family:var(--font-display); font-size:var(--fs-md); font-weight:600; }
+
+/* =========================================================================
+   7. COMPONENTES — BOTÃO
+   ========================================================================= */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:14px 22px; border-radius:var(--radius-full);
+  font-size:var(--fs-sm); font-weight:700;
+  min-height:48px;
+  transition:transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+.btn:active{ transform:scale(.96); }
+.btn--primary{ background:var(--grad); color:#fff; }
+.btn--ghost{ background:var(--bg-elevated); border:1px solid var(--border); color:var(--text); }
+.btn--block{ width:100%; }
+
+/* =========================================================================
+   8. COMPONENTES — TOGGLE / SELETOR / INPUT
+   ========================================================================= */
+.config-item{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+  padding:var(--space-4) 0;
+  border-bottom:1px solid var(--border);
+}
+.config-item:last-child{ border-bottom:none; }
+.config-item__text{ display:flex; flex-direction:column; gap:2px; }
+.config-item__label{ font-size:var(--fs-sm); font-weight:600; }
+.config-item__hint{ font-size:var(--fs-xs); color:var(--text-muted); }
+
+.toggle{
+  position:relative; width:48px; height:28px; border-radius:var(--radius-full);
+  background:var(--bg-sunken); border:1px solid var(--border); flex-shrink:0;
+  transition:background var(--dur-base) var(--ease);
+}
+.toggle::after{
+  content:''; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%;
+  background:var(--text-muted); transition:transform var(--dur-base) var(--ease), background var(--dur-base) var(--ease);
+}
+.toggle[aria-pressed="true"]{ background:var(--grad); border-color:transparent; }
+.toggle[aria-pressed="true"]::after{ transform:translateX(20px); background:#fff; }
+
+.field{ display:flex; flex-direction:column; gap:6px; margin-bottom:var(--space-4); }
+.field label{ font-size:var(--fs-xs); font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px; }
+.field input, .field select{
+  padding:12px 14px; border-radius:var(--radius-sm);
+  background:var(--bg-sunken); border:1px solid var(--border); color:var(--text);
+  font-size:var(--fs-sm); min-height:46px;
+}
+.field input:focus, .field select:focus{ border-color:var(--accent-2); }
+
+.chip-group{ display:flex; flex-wrap:wrap; gap:8px; }
+.chip{
+  padding:8px 14px; border-radius:var(--radius-full);
+  background:var(--bg-sunken); border:1px solid var(--border);
+  font-size:var(--fs-xs); font-weight:600; color:var(--text-muted);
+  transition:all var(--dur-fast) var(--ease);
+}
+.chip[aria-pressed="true"]{ background:var(--grad); color:#fff; border-color:transparent; }
+
+/* =========================================================================
+   9. CONFIGURAÇÕES — ACCORDION
+   ========================================================================= */
+.accordion{ border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:var(--space-3); background:var(--bg-elevated); }
+.accordion__head{
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:var(--space-4) var(--space-5); text-align:left; min-height:56px;
+}
+.accordion__head-left{ display:flex; align-items:center; gap:var(--space-3); }
+.accordion__icon{ width:20px; height:20px; stroke:var(--accent-2); fill:none; stroke-width:1.8; }
+.accordion__title{ font-weight:700; font-size:var(--fs-sm); }
+.accordion__chevron{ width:16px; height:16px; stroke:var(--text-muted); fill:none; stroke-width:2; transition:transform var(--dur-base) var(--ease); }
+.accordion.open .accordion__chevron{ transform:rotate(180deg); }
+.accordion__body{ max-height:0; overflow:hidden; transition:max-height var(--dur-slow) var(--ease); }
+.accordion.open .accordion__body{ max-height:2000px; }
+.accordion__body-inner{ padding:0 var(--space-5) var(--space-5); }
+
+/* theme swatches inside aparência */
+.theme-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:var(--space-4); }
+.theme-swatch{
+  aspect-ratio:1; border-radius:var(--radius-md); border:2px solid transparent;
+  display:flex; align-items:flex-end; padding:8px;
+  font-size:10px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.theme-swatch[aria-pressed="true"]{ border-color:var(--text); }
+.swatch-galaxy{ background:linear-gradient(135deg,#7C5CFF,#34E4EA); }
+.swatch-gothic{ background:linear-gradient(135deg,#8B5CF6,#3B4A8C); }
+.swatch-fantasy{ background:linear-gradient(135deg,#C08A3E,#4B7A51); }
+.swatch-mystery{ background:linear-gradient(135deg,#22D3EE,#D6336C); }
+
+/* =========================================================================
+   10. NAVEGAÇÃO INFERIOR
+   ========================================================================= */
+.bottom-nav{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:640px;
+  display:flex; justify-content:space-around;
+  padding:var(--space-2) var(--space-3) max(var(--space-3), env(safe-area-inset-bottom));
+  background:color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  z-index:40;
+}
+.nav-btn{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:8px 10px; border-radius:var(--radius-md); min-width:56px;
+  color:var(--text-muted); transition:color var(--dur-fast) var(--ease);
+}
+.nav-btn svg{ width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; }
+.nav-btn span{ font-size:10px; font-weight:700; }
+.nav-btn.active{ color:var(--accent-2); }
+.nav-btn.active svg{ filter:drop-shadow(0 0 6px var(--glow)); }
+
+/* =========================================================================
+   11. MODAL / TOAST
+   ========================================================================= */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.55);
+  display:flex; align-items:flex-end; justify-content:center;
+  z-index:100; backdrop-filter:blur(4px);
+}
+.modal-overlay[hidden]{ display:none; }
+.modal{
+  width:100%; max-width:640px; background:var(--bg-elevated);
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  padding:var(--space-5); max-height:80dvh; overflow-y:auto;
+  animation:modalIn calc(var(--dur-slow) * var(--anim-scale)) var(--ease);
+  border-top:1px solid var(--border);
+}
+@keyframes modalIn{ from{ transform:translateY(100%);} to{ transform:translateY(0);} }
+.modal__handle{ width:40px; height:4px; background:var(--border); border-radius:var(--radius-full); margin:0 auto var(--space-4); }
+.modal__title{ font-family:var(--font-display); font-size:var(--fs-lg); margin-bottom:var(--space-4); }
+
+.toast{
+  position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--bg-elevated); border:1px solid var(--border); color:var(--text);
+  padding:12px 20px; border-radius:var(--radius-full); font-size:var(--fs-sm); font-weight:600;
+  box-shadow:var(--shadow-md); z-index:200; opacity:0; pointer-events:none;
+  transition:all var(--dur-base) var(--ease);
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+.placeholder-note{
+  text-align:center; padding:var(--space-7) var(--space-4); color:var(--text-muted);
+}
+.placeholder-note svg{ width:40px; height:40px; stroke:var(--text-muted); fill:none; stroke-width:1.5; margin:0 auto var(--space-3); }
+.mock-tag{
+  display:inline-block; font-size:9px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+  color:var(--text-muted); background:var(--bg-sunken); padding:3px 8px; border-radius:var(--radius-full);
+  margin-bottom:var(--space-3); border:1px solid var(--border);
+}
+
+/* =========================================================================
+   11b. ONBOARDING (primeira execução)
+   ========================================================================= */
+.onboarding{
+  position:fixed; inset:0; z-index:300; background:var(--bg);
+  display:flex; flex-direction:column;
+  overflow-y:auto;
+}
+.onboarding[hidden]{ display:none; }
+.onboarding__inner{
+  max-width:480px; width:100%; margin:0 auto; padding:var(--space-7) var(--space-5) var(--space-6);
+  flex:1; display:flex; flex-direction:column; justify-content:center; min-height:100dvh;
+}
+.onboarding__step{ display:none; animation:viewIn calc(var(--dur-slow) * var(--anim-scale)) var(--ease); }
+.onboarding__step.active{ display:block; }
+.onboarding__emoji{ font-size:48px; margin-bottom:var(--space-4); }
+.onboarding__title{ font-family:var(--font-display); font-size:var(--fs-2xl); margin-bottom:var(--space-2); }
+.onboarding__subtitle{ color:var(--text-muted); font-size:var(--fs-md); margin-bottom:var(--space-6); }
+.onboarding__progress{ display:flex; gap:6px; margin-bottom:var(--space-6); }
+.onboarding__progress span{ flex:1; height:4px; border-radius:var(--radius-full); background:var(--bg-sunken); }
+.onboarding__progress span.done{ background:var(--grad); }
+.onboarding__nav{ display:flex; gap:var(--space-3); margin-top:var(--space-5); }
+
+/* auth screen reaproveita .onboarding como wrapper; passos próprios para evitar conflito de seletor */
+#authRoot{ z-index:400; }
+.auth-step{ display:none; animation:viewIn calc(var(--dur-slow) * var(--anim-scale)) var(--ease); }
+.auth-step.active{ display:block; }
+.auth-error{
+  background:rgba(192,48,74,.12); border:1px solid rgba(192,48,74,.35); color:#C0304A;
+  border-radius:var(--radius-sm); padding:10px 14px; font-size:var(--fs-xs); font-weight:600;
+  margin-bottom:var(--space-4);
+}
+.auth-error[hidden]{ display:none; }
+.auth-link{ display:block; text-align:center; margin-top:var(--space-4); font-size:var(--fs-sm); color:var(--accent-2); font-weight:700; }
+.spinner{
+  width:32px; height:32px; border-radius:50%;
+  border:3px solid var(--border); border-top-color:var(--accent-2);
+  margin:0 auto var(--space-4);
+  animation:spin calc(900ms * var(--anim-scale) + .01s) linear infinite;
+}
+
+/* =========================================================================
+   11c. MISSÕES
+   ========================================================================= */
+.mission-list{ display:flex; flex-direction:column; gap:var(--space-2); }
+.mission-row{
+  display:flex; align-items:center; gap:var(--space-3);
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:var(--space-3) var(--space-4);
+}
+.mission-row__check{
+  width:26px; height:26px; border-radius:50%; flex-shrink:0;
+  border:2px solid var(--border); display:flex; align-items:center; justify-content:center;
+  transition:all var(--dur-fast) var(--ease);
+}
+.mission-row__check svg{ width:14px; height:14px; stroke:#fff; fill:none; stroke-width:3; opacity:0; transition:opacity var(--dur-fast) var(--ease); }
+.mission-row.done .mission-row__check{ background:var(--grad); border-color:transparent; }
+.mission-row.done .mission-row__check svg{ opacity:1; }
+.mission-row.done .mission-row__title{ text-decoration:line-through; color:var(--text-muted); }
+.mission-row__title{ font-size:var(--fs-sm); font-weight:600; flex:1; }
+.mission-row__time{ font-size:var(--fs-xs); color:var(--text-muted); }
+
+/* =========================================================================
+   11d. DATAS ESPECIAIS
+   ========================================================================= */
+.special-date-item{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-3);
+  padding:var(--space-3) 0; border-bottom:1px solid var(--border);
+}
+.special-date-item:last-child{ border-bottom:none; }
+.special-date-item__text{ display:flex; flex-direction:column; gap:2px; }
+.special-date-item__type{ font-size:var(--fs-sm); font-weight:700; color:var(--accent-2); }
+.special-date-item__date{ font-size:var(--fs-xs); color:var(--text-muted); }
+.special-date-item__note{ font-size:var(--fs-xs); color:var(--text-muted); }
+.icon-btn-sm{ width:34px; height:34px; border-radius:50%; background:var(--bg-sunken); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.icon-btn-sm svg{ width:15px; height:15px; stroke:var(--text-muted); fill:none; stroke-width:1.8; }
+.special-date-item--editable{ cursor:pointer; }
+
+.btn--danger{ background:#C0304A; color:#fff; }
+.btn--danger-ghost{ background:transparent; border:1px solid #C0304A; color:#C0304A; }
+
+/* =========================================================================
+   11e. CALENDÁRIO
+   ========================================================================= */
+.calendar-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.calendar-grid__dow{ text-align:center; font-size:10px; font-weight:700; color:var(--text-muted); padding-bottom:4px; }
+.calendar-day{
+  position:relative; aspect-ratio:1; border-radius:var(--radius-sm);
+  display:flex; align-items:center; justify-content:center;
+  font-size:var(--fs-xs); font-weight:600; color:var(--text);
+  background:var(--bg-sunken); border:1px solid transparent;
+  min-height:36px;
+}
+.calendar-day--empty{ background:transparent; }
+.calendar-day--today{ border-color:var(--accent-2); font-weight:800; }
+.calendar-day--special{ background:var(--grad); color:#fff; }
+.calendar-day--folga{ background:rgba(63,174,106,.18); }
+
+/* =========================================================================
+   12. RESPONSIVO — tablet / desktop
+   ========================================================================= */
+@media (min-width:768px){
+  #app{ max-width:960px; }
+  .app-header{ padding:var(--space-6) var(--space-6) var(--space-4); }
+  main#view-root{ padding:0 var(--space-6) var(--space-8); }
+  .grid-2{ grid-template-columns:repeat(4,1fr); }
+  .bottom-nav{ max-width:960px; }
+}
+@media (min-width:1024px){
+  #app{ max-width:1180px; flex-direction:row; }
+  .app-header{ display:none; }
+  .bottom-nav{
+    position:sticky; top:0; left:0; transform:none; width:220px; max-width:220px;
+    height:100dvh; flex-direction:column; justify-content:flex-start; gap:var(--space-3);
+    padding:var(--space-6) var(--space-3); border-top:none; border-right:1px solid var(--border);
+    backdrop-filter:none; background:var(--bg-sunken);
+  }
+  .nav-btn{ flex-direction:row; justify-content:flex-start; width:100%; gap:12px; padding:12px 16px; }
+  main#view-root{ padding:var(--space-7) var(--space-7) var(--space-8); max-width:760px; }
+  .desktop-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-5); }
+}
+@media (min-width:1024px) and (max-width:1023.98px){}
+.desktop-header{ display:none; }
+@media (min-width:1024px){ .desktop-header{ display:flex; } }
+
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+</style>
+</head>
+<body data-theme="galaxy" data-mode="dark" data-anim="on">
+
+<!-- ===================== AUTENTICAÇÃO ===================== -->
+<div class="onboarding" id="authRoot">
+  <div class="onboarding__inner">
+
+    <div class="auth-step active" data-auth-step="loading">
+      <div class="spinner"></div>
+      <p class="onboarding__subtitle" style="text-align:center; margin-bottom:0;">Verificando sessão…</p>
+    </div>
+
+    <div class="auth-step" data-auth-step="login">
+      <div class="onboarding__emoji">🌙</div>
+      <h2 class="onboarding__title">Bem-vinda de volta</h2>
+      <p class="onboarding__subtitle">Entre com sua conta para continuar.</p>
+      <p class="auth-error" id="authLoginError" hidden></p>
+      <div class="field"><label>E-mail</label><input type="email" id="authEmail" autocomplete="username" placeholder="seu@email.com"></div>
+      <div class="field"><label>Senha</label><input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="btn btn--primary btn--block" id="btnLogin">Entrar</button>
+      <button class="auth-link" id="btnGoForgot">Esqueci minha senha</button>
+    </div>
+
+    <div class="auth-step" data-auth-step="forgot">
+      <div class="onboarding__emoji">🔑</div>
+      <h2 class="onboarding__title" style="font-size:var(--fs-xl);">Recuperar senha</h2>
+      <p class="onboarding__subtitle">Enviaremos um link de redefinição para o seu e-mail.</p>
+      <p class="auth-error" id="authForgotError" hidden></p>
+      <div class="field"><label>E-mail</label><input type="email" id="forgotEmail" placeholder="seu@email.com"></div>
+      <button class="btn btn--primary btn--block" id="btnSendForgot">Enviar link</button>
+      <button class="auth-link" id="btnBackToLogin">Voltar para o login</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== ONBOARDING (primeira execução) ===================== -->
+<div class="onboarding" id="onboardingRoot" hidden>
+  <div class="onboarding__inner">
+
+    <div class="onboarding__step active" data-step="1">
+      <div class="onboarding__emoji">🌱</div>
+      <h2 class="onboarding__title">Olá</h2>
+      <p class="onboarding__subtitle">Vamos deixar tudo do seu jeito. Isso leva menos de um minuto.</p>
+      <button class="btn btn--primary btn--block" id="btnOnboardingStart">Começar</button>
+    </div>
+
+    <div class="onboarding__step" data-step="2">
+      <div class="onboarding__progress"><span class="done"></span><span></span><span></span></div>
+      <h2 class="onboarding__title" style="font-size:var(--fs-xl);">Sobre você</h2>
+      <p class="onboarding__subtitle">Só o essencial — dá para ajustar depois em Configurações.</p>
+      <div class="field"><label>Nome</label><input type="text" id="obName" placeholder="Como podemos te chamar?"></div>
+      <div class="field"><label>Altura (cm)</label><input type="number" id="obHeight" placeholder="ex: 165"></div>
+      <div class="field"><label>Peso (kg)</label><input type="number" id="obWeight" placeholder="ex: 60"></div>
+      <div class="field"><label>Objetivo</label><input type="text" id="obGoal" placeholder="ex: mais energia no dia a dia"></div>
+      <div class="onboarding__nav">
+        <button class="btn btn--ghost" data-ob-back>Voltar</button>
+        <button class="btn btn--primary" style="flex:1;" data-ob-next>Continuar</button>
+      </div>
+    </div>
+
+    <div class="onboarding__step" data-step="3">
+      <div class="onboarding__progress"><span class="done"></span><span class="done"></span><span></span></div>
+      <h2 class="onboarding__title" style="font-size:var(--fs-xl);">Sua rotina</h2>
+      <p class="onboarding__subtitle">Horários aproximados já ajudam bastante.</p>
+      <div class="field"><label>Horário de acordar</label><input type="time" id="obWake" value="07:00"></div>
+      <div class="field"><label>Horário de dormir</label><input type="time" id="obSleep" value="23:00"></div>
+      <div class="field"><label>Início do trabalho</label><input type="time" id="obWorkStart" value="08:00"></div>
+      <div class="field"><label>Final do trabalho</label><input type="time" id="obWorkEnd" value="17:50"></div>
+      <div class="field">
+        <label>Dias de trabalho</label>
+        <div class="chip-group" id="obWorkDays">
+          <button class="chip" data-day="seg" aria-pressed="true">Seg</button>
+          <button class="chip" data-day="ter" aria-pressed="true">Ter</button>
+          <button class="chip" data-day="qua" aria-pressed="true">Qua</button>
+          <button class="chip" data-day="qui" aria-pressed="true">Qui</button>
+          <button class="chip" data-day="sex" aria-pressed="true">Sex</button>
+          <button class="chip" data-day="sab" aria-pressed="false">Sáb</button>
+          <button class="chip" data-day="dom" aria-pressed="false">Dom</button>
+        </div>
+      </div>
+      <div class="onboarding__nav">
+        <button class="btn btn--ghost" data-ob-back>Voltar</button>
+        <button class="btn btn--primary" style="flex:1;" id="btnOnboardingFinish">Concluir</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ===================== NAV (vira sidebar em desktop) ===================== -->
+  <nav class="bottom-nav" id="mainNav" aria-label="Navegação principal">
+    <button class="nav-btn active" data-view="hoje">
+      <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+      <span>Hoje</span>
+    </button>
+    <button class="nav-btn" data-view="alimentacao">
+      <svg viewBox="0 0 24 24"><path d="M5 3v18"/><path d="M5 3c0 3 3 4 3 8s-3 5-3 10"/><path d="M19 3v18"/><path d="M19 3v8"/></svg>
+      <span>Alimentação</span>
+    </button>
+    <button class="nav-btn" data-view="movimento">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 8"/><path d="M12 13l4 2 3 6"/><path d="M8 11l4-1 4 2"/></svg>
+      <span>Movimento</span>
+    </button>
+    <button class="nav-btn" data-view="evolucao">
+      <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      <span>Evolução</span>
+    </button>
+    <button class="nav-btn" data-view="config">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.55 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.55-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg>
+      <span>Config.</span>
+    </button>
+  </nav>
+
+  <div style="flex:1; min-width:0;">
+
+  <!-- ===================== HEADER (mobile/tablet) ===================== -->
+  <header class="app-header">
+    <div class="greeting">
+      <span class="greeting__hi" id="greetingText">Boa tarde,</span>
+      <h1 class="greeting__name" id="greetingName">Viajante</h1>
+    </div>
+    <div class="header-actions">
+      <span class="sync-badge" id="syncBadge" data-status="offline"><span class="sync-badge__dot"></span><span id="syncBadgeText">Sincronizado</span></span>
+      <div class="level-chip" id="levelChip">✦ Nível 4</div>
+      <button class="icon-btn" id="btnSettingsHeader" aria-label="Abrir configurações">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.55 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.55-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="view-root">
+
+    <!-- ===================== VIEW: HOJE ===================== -->
+    <section class="view active" id="view-hoje" aria-labelledby="hojeTitle">
+      <div class="desktop-header">
+        <div class="greeting">
+          <span class="greeting__hi" id="greetingTextDesktop">Boa tarde,</span>
+          <h1 class="greeting__name" id="greetingNameDesktop">Viajante</h1>
+        </div>
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <span class="sync-badge" id="syncBadgeDesktop" data-status="offline"><span class="sync-badge__dot"></span><span id="syncBadgeTextDesktop">Sincronizado</span></span>
+          <div class="level-chip">✦ Nível 4</div>
+        </div>
+      </div>
+      <h2 id="hojeTitle" class="section-title" style="margin-top:0;">Seu dia</h2>
+
+      <div class="card card--hero">
+        <span class="mock-tag">progresso do dia (missões)</span>
+        <div class="presence">
+          <div class="presence__ring" id="presenceRing" style="--progress:0;">
+            <div class="presence__core">
+              <div class="value" id="presenceValue">0%</div>
+              <div class="label">do dia</div>
+            </div>
+          </div>
+          <div class="presence__orbit"><div class="presence__dot"></div></div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <p style="color:var(--text-muted); font-size:var(--fs-sm); margin:0;" id="dayContextText">Um passo de cada vez. Hoje não precisa ser perfeito.</p>
+          <button class="icon-btn-sm" id="btnSpeakDay" aria-label="Ouvir mensagem do dia" style="width:28px;height:28px;flex-shrink:0;"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg></button>
+        </div>
+      </div>
+
+      <h2 class="section-title">Água 💧</h2>
+      <div class="card" id="waterCard">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+          <span style="font-weight:700; font-size:var(--fs-md);" id="waterAmountText">0 / 2000 ml</span>
+        </div>
+        <div style="height:10px; background:var(--bg-sunken); border-radius:var(--radius-full); overflow:hidden; margin-bottom:var(--space-4);">
+          <div id="waterBar" style="width:0%; height:100%; background:var(--grad); border-radius:var(--radius-full); transition:width 500ms var(--ease);"></div>
+        </div>
+        <div class="chip-group">
+          <button class="chip" data-water-add="250">+ 250 ml</button>
+          <button class="chip" data-water-add="500">+ 500 ml</button>
+          <button class="chip" id="btnWaterBottle">+ Garrafa</button>
+          <button class="chip" id="btnWaterCustom">Personalizado</button>
+        </div>
+      </div>
+
+      <h2 class="section-title">Seu dia</h2>
+      <div class="card mission">
+        <div class="mission__icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2s6 5.5 6 11a6 6 0 01-12 0c0-5.5 6-11 6-11z"/></svg>
+        </div>
+        <div>
+          <div class="mission__label" id="nextMissionLabel">Próximo passo</div>
+          <div class="mission__text" id="nextMissionText">Beber um copo de água</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:var(--space-3);">
+        <div class="mission-list" id="missionList"></div>
+      </div>
+
+      <h2 class="section-title">Resumo do dia</h2>
+      <div class="grid-2">
+        <div class="card summary-card">
+          <div class="summary-card__icon"><svg viewBox="0 0 24 24"><path d="M5 3v18M19 3v18M19 3c0 4-3 5-3 9s3 5 3 9"/></svg></div>
+          <span class="summary-card__label">Alimentação</span>
+          <span class="summary-card__value" id="summaryMeals">— de —</span>
+        </div>
+        <div class="card summary-card">
+          <div class="summary-card__icon"><svg viewBox="0 0 24 24"><path d="M12 2s6 5.5 6 11a6 6 0 01-12 0c0-5.5 6-11 6-11z"/></svg></div>
+          <span class="summary-card__label">Água</span>
+          <span class="summary-card__value" id="summaryWater">— / — ml</span>
+        </div>
+        <div class="card summary-card">
+          <div class="summary-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 8"/><path d="M12 13l4 2 3 6"/></svg></div>
+          <span class="summary-card__label">Movimento</span>
+          <span class="summary-card__value" id="summaryMovement">Ainda não registrado</span>
+        </div>
+        <div class="card summary-card">
+          <div class="summary-card__icon"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></div>
+          <span class="summary-card__label">Sono</span>
+          <span class="summary-card__value">Meta configurada</span>
+        </div>
+      </div>
+
+      <h2 class="section-title">Progresso</h2>
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:var(--space-4);">
+          <div style="flex:1; height:8px; background:var(--bg-sunken); border-radius:var(--radius-full); overflow:hidden;">
+            <div id="levelProgressBar" style="width:0%; height:100%; background:var(--grad); border-radius:var(--radius-full); transition:width 500ms var(--ease);"></div>
+          </div>
+          <span style="font-size:var(--fs-xs); color:var(--text-muted); font-weight:700;" id="levelProgressText">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW: ALIMENTAÇÃO ===================== -->
+    <section class="view" id="view-alimentacao">
+      <h2 class="section-title" style="margin-top:0;">Alimentação</h2>
+      <div class="mission-list" id="mealSlotsList" style="margin-bottom:var(--space-5);"></div>
+
+      <div class="grid-2" style="margin-bottom:var(--space-5);">
+        <div class="card">
+          <span class="summary-card__label">Coca Zero</span>
+          <div style="font-family:var(--font-display); font-size:var(--fs-lg); font-weight:700; margin:4px 0;" id="cocaZeroText">0 / 350 ml</div>
+          <div class="chip-group">
+            <button class="chip" data-coca-add="150">+150 ml</button>
+            <button class="chip" data-coca-add="350">+350 ml (lata)</button>
+          </div>
+        </div>
+        <div class="card">
+          <span class="summary-card__label">Whey</span>
+          <div style="font-family:var(--font-display); font-size:var(--fs-lg); font-weight:700; margin:4px 0;" id="wheyText">1 scoop · 16:00</div>
+          <button class="btn btn--ghost btn--block" id="btnWheyToday" style="min-height:40px;">Consumido hoje</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--space-3);">
+        <button class="btn btn--ghost btn--block" id="btnOffRoutine">Hoje saiu da rotina</button>
+      </div>
+      <div class="card" style="margin-bottom:var(--space-5);">
+        <button class="btn btn--ghost btn--block" id="btnCandyToday">Comi doce hoje</button>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M6 2l1 4h10l1-4M5 8h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 8z"/></svg><span class="accordion__title">Lista de compras</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div id="shoppingListContainer"></div>
+          <div class="field" style="margin-top:var(--space-4);"><label>Adicionar item</label><input type="text" id="newShoppingItem" placeholder="ex: iogurte grego"></div>
+          <button class="btn btn--ghost btn--block" id="btnAddShoppingItem">Adicionar à lista</button>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW: MOVIMENTO ===================== -->
+    <section class="view" id="view-movimento">
+      <h2 class="section-title" style="margin-top:0;">Movimento</h2>
+      <div class="card" style="margin-bottom:var(--space-5);">
+        <span class="mission__label">Pausa rápida</span>
+        <p style="font-size:var(--fs-sm); color:var(--text-muted); margin:6px 0 var(--space-3);">Uma pequena pausa pode ser um bom momento para sair da tela.</p>
+        <button class="btn btn--primary btn--block" id="btnQuickBreak">Fazer uma pausa agora</button>
+      </div>
+      <div class="mission-list" id="movementList" style="margin-bottom:var(--space-4);"></div>
+      <div class="card">
+        <div class="field"><label>Nova atividade</label><input type="text" id="newMovementName" placeholder="ex: dança livre"></div>
+        <button class="btn btn--ghost btn--block" id="btnAddMovement">Adicionar atividade</button>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW: EVOLUÇÃO ===================== -->
+    <section class="view" id="view-evolucao">
+      <h2 class="section-title" style="margin-top:0;">Evolução</h2>
+
+      <div class="chip-group" id="evoPeriodGroup" style="margin-bottom:var(--space-5);">
+        <button class="chip" data-period="7" aria-pressed="true">7 dias</button>
+        <button class="chip" data-period="30" aria-pressed="false">30 dias</button>
+        <button class="chip" data-period="90" aria-pressed="false">90 dias</button>
+        <button class="chip" data-period="all" aria-pressed="false">Tudo</button>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:var(--space-5);">
+        <div class="card summary-card"><span class="summary-card__label">Peso inicial</span><span class="summary-card__value" id="evoWeightInitial">—</span></div>
+        <div class="card summary-card"><span class="summary-card__label">Peso atual</span><span class="summary-card__value" id="evoWeightCurrent">—</span></div>
+        <div class="card summary-card"><span class="summary-card__label">Meta</span><span class="summary-card__value" id="evoWeightGoal">—</span></div>
+        <div class="card summary-card"><span class="summary-card__label">Distância da meta</span><span class="summary-card__value" id="evoWeightDistance">—</span></div>
+      </div>
+
+      <div class="card" id="evoChartCard" style="margin-bottom:var(--space-5);"></div>
+
+      <h2 class="section-title">Medidas — comparação</h2>
+      <div class="card" id="evoMeasurementsCard" style="margin-bottom:var(--space-5);"></div>
+
+      <h2 class="section-title">No período</h2>
+      <div class="grid-2">
+        <div class="card summary-card"><span class="summary-card__label">Água (média/dia)</span><span class="summary-card__value" id="evoWaterAvg">—</span></div>
+        <div class="card summary-card"><span class="summary-card__label">Refeições registradas</span><span class="summary-card__value" id="evoMealsCount">—</span></div>
+        <div class="card summary-card"><span class="summary-card__label">Movimento</span><span class="summary-card__value" id="evoMovementCount">—</span></div>
+        <div class="card summary-card"><span class="summary-card__label">Dias com registro</span><span class="summary-card__value" id="evoActiveDays">—</span></div>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW: CONFIGURAÇÕES ===================== -->
+    <section class="view" id="view-config">
+      <h2 class="section-title" style="margin-top:0;">Configurações</h2>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="accordion__title">Meu perfil</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="field"><label>Nome</label><input type="text" id="cfgProfileName" placeholder="Seu nome"></div>
+          <div class="field"><label>Apelido</label><input type="text" id="cfgProfileNickname" placeholder="ex: Vivi"></div>
+          <div class="field"><label>Data de nascimento</label><input type="date" id="cfgProfileBirth"></div>
+          <div class="field"><label>Sexo</label><select id="cfgProfileSex"><option>Feminino</option><option>Masculino</option><option>Prefiro não informar</option></select></div>
+          <div class="field"><label>Altura (cm)</label><input type="number" id="cfgProfileHeight" placeholder="ex: 165"></div>
+          <div class="field"><label>Peso inicial (kg)</label><input type="number" id="cfgProfileWeightInitial" placeholder="ex: 90"></div>
+          <div class="field"><label>Observação pessoal (opcional)</label><input type="text" id="cfgProfileNote" placeholder="algo que queira lembrar"></div>
+          <button class="btn btn--primary btn--block" id="btnSaveProfile">Salvar perfil</button>
+
+          <div class="card" style="margin-top:var(--space-5); text-align:center;" id="imcCard">
+            <span class="mock-tag">indicador matemático</span>
+            <div class="presence__core" style="position:static;">
+              <div class="value" id="imcValue" style="font-family:var(--font-display); font-size:var(--fs-2xl); font-weight:700;">—</div>
+              <div class="label" style="font-size:var(--fs-xs); color:var(--text-muted);">IMC</div>
+            </div>
+            <p style="font-size:var(--fs-xs); color:var(--text-muted); margin-top:var(--space-2);">Indicador calculado a partir dos dados informados. Não substitui avaliação profissional.</p>
+          </div>
+
+          <h3 class="section-title" style="margin-top:var(--space-6);">Registrar peso</h3>
+          <div class="field"><label>Peso (kg)</label><input type="number" id="newWeightValue" placeholder="ex: 87"></div>
+          <div class="field"><label>Data</label><input type="date" id="newWeightDate"></div>
+          <div class="field"><label>Observação (opcional)</label><input type="text" id="newWeightNote" placeholder="como você se sentiu?"></div>
+          <button class="btn btn--ghost btn--block" id="btnAddWeight">Adicionar registro</button>
+          <div id="weightHistoryList" style="margin-top:var(--space-3);"></div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.8 5.5 21l2-7.5L2 9h7z"/></svg><span class="accordion__title">Meu objetivo</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <p style="font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:var(--space-4);">Preencha só o que fizer sentido para você agora. Nada aqui é obrigatório.</p>
+          <div class="field"><label>Objetivo principal</label><input type="text" id="cfgGoalMain" placeholder="ex: criar hábitos mais consistentes"></div>
+          <div class="field"><label>Peso-meta (kg)</label><input type="number" id="cfgGoalWeight" placeholder="opcional"></div>
+          <div class="field"><label>Meta de cintura (cm)</label><input type="number" id="cfgGoalWaist" placeholder="opcional"></div>
+          <div class="field"><label>Meta de hidratação (L/dia)</label><input type="number" step="0.1" id="cfgGoalHydration" placeholder="opcional"></div>
+          <div class="field"><label>Meta de movimento (min/dia)</label><input type="number" id="cfgGoalMovement" placeholder="opcional"></div>
+          <div class="field"><label>Objetivo personalizado</label><input type="text" id="cfgGoalCustom" placeholder="algo só seu"></div>
+          <button class="btn btn--primary btn--block" id="btnSaveGoals">Salvar objetivos</button>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="accordion__title">Medidas</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <p style="font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:var(--space-4);">Registre só o que você mediu — o resto pode ficar em branco.</p>
+          <div class="field"><label>Data da medição</label><input type="date" id="measDate"></div>
+          <div class="field"><label>Cintura (cm)</label><input type="number" id="measWaist"></div>
+          <div class="field"><label>Quadril (cm)</label><input type="number" id="measHip"></div>
+          <div class="field"><label>Busto (cm)</label><input type="number" id="measBust"></div>
+          <div class="field"><label>Braço direito (cm)</label><input type="number" id="measArmRight"></div>
+          <div class="field"><label>Braço esquerdo (cm)</label><input type="number" id="measArmLeft"></div>
+          <div class="field"><label>Coxa direita (cm)</label><input type="number" id="measThighRight"></div>
+          <div class="field"><label>Coxa esquerda (cm)</label><input type="number" id="measThighLeft"></div>
+          <div class="field"><label>Panturrilha direita (cm)</label><input type="number" id="measCalfRight"></div>
+          <div class="field"><label>Panturrilha esquerda (cm)</label><input type="number" id="measCalfLeft"></div>
+          <div class="field"><label>Observação (opcional)</label><input type="text" id="measNote"></div>
+          <button class="btn btn--primary btn--block" id="btnAddMeasurement">Salvar medição</button>
+          <button class="btn btn--ghost btn--block" id="btnCancelMeasurementEdit" hidden style="margin-top:var(--space-2);">Cancelar edição</button>
+          <div id="measurementsHistoryList" style="margin-top:var(--space-4);"></div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span class="accordion__title">Minha rotina</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="field"><label>Horário de acordar</label><input type="time" id="cfgWake" value="07:00"></div>
+          <div class="field"><label>Horário de dormir</label><input type="time" id="cfgSleep" value="23:00"></div>
+          <div class="field"><label>Início do trabalho</label><input type="time" id="cfgWorkStart" value="08:00"></div>
+          <div class="field"><label>Final do trabalho</label><input type="time" id="cfgWorkEnd" value="17:50"></div>
+          <div class="field"><label>Saída de casa (aprox.)</label><input type="time" id="cfgLeaveHome" value="07:00"></div>
+          <div class="field"><label>Deslocamento (min)</label><input type="number" id="cfgCommuteMinutes" value="10"></div>
+          <div class="field"><label>Retorno para casa (aprox.)</label><input type="time" id="cfgReturnHome" value="18:00"></div>
+          <div class="field">
+            <label>Dias da semana</label>
+            <div id="cfgWeeklySchedule" style="display:flex; flex-direction:column; gap:var(--space-2);">
+              <div class="config-item"><span class="config-item__label">Segunda</span><select data-day="seg"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+              <div class="config-item"><span class="config-item__label">Terça</span><select data-day="ter"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+              <div class="config-item"><span class="config-item__label">Quarta</span><select data-day="qua"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+              <div class="config-item"><span class="config-item__label">Quinta</span><select data-day="qui"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+              <div class="config-item"><span class="config-item__label">Sexta</span><select data-day="sex"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+              <div class="config-item"><span class="config-item__label">Sábado</span><select data-day="sab"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+              <div class="config-item"><span class="config-item__label">Domingo</span><select data-day="dom"><option value="trabalho">Trabalho</option><option value="folga">Folga</option><option value="personalizado">Horário personalizado</option><option value="indisponivel">Indisponível</option></select></div>
+            </div>
+          </div>
+          <button class="btn btn--primary btn--block" id="btnSaveRoutine">Salvar rotina</button>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="accordion__title">Calendário</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+            <button class="icon-btn-sm" id="btnCalPrev" aria-label="Mês anterior" style="width:36px;height:36px;"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <strong id="calMonthLabel" style="font-family:var(--font-display); font-size:var(--fs-md);">—</strong>
+            <button class="icon-btn-sm" id="btnCalNext" aria-label="Próximo mês" style="width:36px;height:36px;"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+          <div id="calendarGrid"></div>
+          <div class="chip-group" style="margin-top:var(--space-4);">
+            <span class="chip" style="pointer-events:none; background:var(--bg-sunken);">🟣 Especial</span>
+            <span class="chip" style="pointer-events:none; background:var(--bg-sunken);">⚪ Trabalho</span>
+            <span class="chip" style="pointer-events:none; background:var(--bg-sunken);">🟢 Folga</span>
+          </div>
+          <div class="config-item" id="rowTodayOff" style="margin-top:var(--space-3);">
+            <div class="config-item__text"><span class="config-item__label">Hoje não trabalho</span><span class="config-item__hint">Marca somente a data de hoje como folga</span></div>
+            <button class="btn btn--ghost" style="min-height:40px; padding:8px 16px;" id="btnTodayOff">Registrar</button>
+          </div>
+          <div class="config-item">
+            <div class="config-item__text"><span class="config-item__label">Férias, recesso e datas especiais</span><span class="config-item__hint">Gerenciar lista completa</span></div>
+            <button class="btn btn--ghost" style="min-height:40px; padding:8px 16px;" id="btnOpenSpecialDates">Abrir</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M5 3v18M19 3v18M19 3c0 4-3 5-3 9s3 5 3 9"/></svg><span class="accordion__title">Minha alimentação</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <p style="font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:var(--space-4);">Ajuste horários e opções de cada refeição. Nada aqui é obrigatório.</p>
+          <div id="mealPlanEditor"></div>
+          <h3 class="section-title">Coca Zero &amp; Whey</h3>
+          <div class="field"><label>Meta de Coca Zero (ml/dia)</label><input type="number" id="cfgCocaGoal" value="350"></div>
+          <div class="field"><label>Whey planejado (scoops/dia)</label><input type="number" id="cfgWheyQty" value="1"></div>
+          <div class="field"><label>Horário preferencial do whey</label><input type="time" id="cfgWheyTime" value="16:00"></div>
+          <button class="btn btn--primary btn--block" id="btnSaveNutritionConfig">Salvar alimentação</button>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M12 2s6 5.5 6 11a6 6 0 01-12 0c0-5.5 6-11 6-11z"/></svg><span class="accordion__title">Hidratação</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="field"><label>Meta diária (ml)</label><input type="number" id="cfgWaterGoal" value="2000"></div>
+          <div class="field"><label>Capacidade da garrafa (ml)</label><input type="number" id="cfgBottleMl" value="800"></div>
+          <div class="field"><label>Capacidade do copo (ml)</label><input type="number" id="cfgCupMl" value="250"></div>
+          <div class="field"><label>Horário inicial dos lembretes</label><input type="time" id="cfgReminderStart" value="08:00"></div>
+          <div class="field"><label>Horário final dos lembretes</label><input type="time" id="cfgReminderEnd" value="21:00"></div>
+          <div class="field"><label>Intervalo dos lembretes (min)</label><input type="number" id="cfgReminderInterval" value="60"></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Modo silencioso</span><span class="config-item__hint">Pausa os lembretes de água</span></div><button class="toggle" id="toggleWaterQuiet" aria-pressed="false"></button></div>
+          <button class="btn btn--primary btn--block" id="btnSaveHydrationConfig">Salvar hidratação</button>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 8"/><path d="M12 13l4 2 3 6"/></svg><span class="accordion__title">Movimento</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <p style="font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:var(--space-4);">Gerencie suas atividades. Nada aqui é obrigatório.</p>
+          <div id="movementConfigList"></div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg><span class="accordion__title">Aparência</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="field">
+            <label>Tema</label>
+            <div class="theme-grid" id="themeGrid">
+              <button class="theme-swatch swatch-galaxy" data-theme-choice="galaxy" aria-pressed="true">Galáxia</button>
+              <button class="theme-swatch swatch-gothic" data-theme-choice="gothic" aria-pressed="false">Noite Gótica</button>
+              <button class="theme-swatch swatch-fantasy" data-theme-choice="fantasy" aria-pressed="false">Fantasia</button>
+              <button class="theme-swatch swatch-mystery" data-theme-choice="mystery" aria-pressed="false">Mistério</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Modo</label>
+            <div class="chip-group" id="modeGroup">
+              <button class="chip" data-mode-choice="light" aria-pressed="false">Claro</button>
+              <button class="chip" data-mode-choice="dark" aria-pressed="true">Escuro</button>
+              <button class="chip" data-mode-choice="auto" aria-pressed="false">Automático</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tamanho da fonte</label>
+            <div class="chip-group" id="fontGroup">
+              <button class="chip" data-font-choice="0.9" aria-pressed="false">Pequena</button>
+              <button class="chip" data-font-choice="1" aria-pressed="true">Normal</button>
+              <button class="chip" data-font-choice="1.15" aria-pressed="false">Grande</button>
+              <button class="chip" data-font-choice="1.3" aria-pressed="false">Muito grande</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Animações</label>
+            <div class="chip-group" id="animGroup">
+              <button class="chip" data-anim-choice="full" aria-pressed="true">Completas</button>
+              <button class="chip" data-anim-choice="reduced" aria-pressed="false">Reduzidas</button>
+              <button class="chip" data-anim-choice="off" aria-pressed="false">Desligadas</button>
+            </div>
+          </div>
+          <div class="field"><label>Intensidade visual</label><select><option>Suave</option><option selected>Padrão</option><option>Vibrante</option></select></div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="accordion__title">Som e voz</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Sons e efeitos</span></div><button class="toggle" id="toggleAudio" aria-pressed="false"></button></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Voz</span><span class="config-item__hint">Lê a mensagem do dia em voz alta quando você tocar no ícone 🔊</span></div><button class="toggle" id="toggleVoice" aria-pressed="false"></button></div>
+          <div class="field"><label>Volume</label><input type="range" id="cfgVolume" min="0" max="100" value="60"></div>
+          <div class="field"><label>Velocidade da voz</label><input type="range" id="cfgVoiceRate" min="50" max="150" value="100"></div>
+          <p style="font-size:var(--fs-xs); color:var(--text-muted);">Sons e voz nunca tocam sozinhos — só quando você interage com o app.</p>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="accordion__title">Comunicação</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="field"><label>Estilo das mensagens</label><select><option>Acolhedor</option><option>Direto</option><option>Divertido</option></select></div>
+          <div class="field"><label>Frequência</label><select><option>Poucas mensagens</option><option>Equilibrado</option><option>Frequente</option></select></div>
+          <div class="field"><label>Mensagens personalizadas</label><input type="text" placeholder="Escreva uma frase sua"></div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="accordion__title">Notificações</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Notificações gerais</span><span class="config-item__hint" id="notifPermHint">Toque para permitir no navegador</span></div><button class="btn btn--ghost" style="min-height:40px; padding:8px 16px;" id="btnEnableNotifications">Ativar</button></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Água</span></div><button class="toggle" data-notif="water" aria-pressed="true"></button></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Alimentação</span></div><button class="toggle" data-notif="food" aria-pressed="true"></button></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Movimento</span></div><button class="toggle" data-notif="movement" aria-pressed="false"></button></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Sono</span></div><button class="toggle" data-notif="sleep" aria-pressed="false"></button></div>
+          <div class="config-item"><div class="config-item__text"><span class="config-item__label">Mensagens motivacionais</span></div><button class="toggle" data-notif="messages" aria-pressed="true"></button></div>
+          <div class="field"><label>Horário silencioso — início</label><input type="time" id="cfgQuietStart" value="22:00"></div>
+          <div class="field"><label>Horário silencioso — fim</label><input type="time" id="cfgQuietEnd" value="07:00"></div>
+          <button class="btn btn--primary btn--block" id="btnSaveNotifConfig">Salvar notificações</button>
+          <p style="font-size:var(--fs-xs); color:var(--text-muted); margin-top:var(--space-3);">As notificações funcionam enquanto o app está aberto no navegador. Notificações em segundo plano exigiriam um serviço de push próprio, que não faz parte desta arquitetura.</p>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.8 5.5 21l2-7.5L2 9h7z"/></svg><span class="accordion__title">Gamificação</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="card" style="text-align:center; margin-bottom:var(--space-4);">
+            <div style="font-family:var(--font-display); font-size:var(--fs-lg); font-weight:700;" id="gamifyLevelName">Exploradora</div>
+            <div style="font-size:var(--fs-xs); color:var(--text-muted); margin-bottom:var(--space-3);" id="gamifyXpText">0 XP</div>
+            <div style="height:8px; background:var(--bg-sunken); border-radius:var(--radius-full); overflow:hidden;">
+              <div id="gamifyXpBar" style="width:0%; height:100%; background:var(--grad); border-radius:var(--radius-full); transition:width 500ms var(--ease);"></div>
+            </div>
+            <div style="font-size:var(--fs-xs); color:var(--text-muted); margin-top:var(--space-2);" id="gamifyStreakText">Sequência: 0 dia</div>
+          </div>
+          <h3 class="section-title">Conquistas</h3>
+          <div id="achievementsList"></div>
+        </div></div>
+      </div>
+
+      <div class="accordion" data-acc>
+        <button class="accordion__head">
+          <span class="accordion__head-left"><svg class="accordion__icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span class="accordion__title">Privacidade</span></span>
+          <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion__body"><div class="accordion__body-inner">
+          <div class="config-item">
+            <div class="config-item__text"><span class="config-item__label">Conta</span><span class="config-item__hint" id="accountEmailHint">—</span></div>
+            <span class="sync-badge" id="syncBadgeConfig" data-status="offline"><span class="sync-badge__dot"></span><span id="syncBadgeTextConfig">Sincronizado</span></span>
+          </div>
+          <div class="config-item">
+            <div class="config-item__text"><span class="config-item__label">Encerrar sessão</span><span class="config-item__hint">Sai da sua conta neste dispositivo</span></div>
+            <button class="btn btn--ghost" style="min-height:40px; padding:8px 16px;" id="btnLogout">Sair</button>
+          </div>
+          <div class="config-item">
+            <div class="config-item__text"><span class="config-item__label">Restaurar configurações</span><span class="config-item__hint">Volta aparência, som e notificações ao padrão</span></div>
+            <button class="btn btn--ghost" style="min-height:40px; padding:8px 16px;" id="btnRestoreSettings">Restaurar</button>
+          </div>
+          <div class="config-item">
+            <div class="config-item__text"><span class="config-item__label">Redefinir aplicativo</span><span class="config-item__hint">Apaga o cache salvo neste dispositivo</span></div>
+            <button class="btn btn--danger-ghost" style="min-height:40px; padding:8px 16px;" id="btnResetApp">Redefinir</button>
+          </div>
+          <div class="config-item">
+            <div class="config-item__text"><span class="config-item__label">Apagar meus dados</span><span class="config-item__hint">Remove perfil, histórico e registros da nuvem</span></div>
+            <button class="btn btn--danger-ghost" style="min-height:40px; padding:8px 16px;" id="btnDeleteAllData">Apagar</button>
+          </div>
+        </div></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  </div><!-- fim wrapper -->
+</div><!-- fim #app -->
+
+<!-- ===================== MODAL ===================== -->
+<div class="modal-overlay" id="modalRoot" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal__handle"></div>
+    <h3 class="modal__title" id="modalTitle">Título</h3>
+    <div id="modalBody"></div>
+    <div id="modalActions" style="display:flex; flex-direction:column; gap:var(--space-3); margin-top:var(--space-4);"></div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toastRoot"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   UTILITÁRIOS
+   ========================================================================= */
+const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+const genId = (p) => (p||'id') + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const genUUID = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; const v = c==='x' ? r : (r&0x3|0x8); return v.toString(16); });
+const escapeHTML = (str) => { const d = document.createElement('div'); d.textContent = str == null ? '' : str; return d.innerHTML; };
+const todayKey = (d) => (d||new Date()).toISOString().slice(0,10);
+const dayOfWeekKey = (d) => ['dom','seg','ter','qua','qui','sex','sab'][(d||new Date()).getDay()];
+function todayKeyMinusDays(n){ const d = new Date(); d.setDate(d.getDate()-n); return todayKey(d); }
+function formatDateBR(iso){ const [y,m,d] = iso.split('-'); return d+'/'+m+'/'+y; }
+function addMinutes(hhmm, mins){
+  if(!hhmm) return '--';
+  const [h,m] = hhmm.split(':').map(Number);
+  const d = new Date(2000,0,1,h,m+mins);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+/* =========================================================================
+   CAMADA DE PERSISTÊNCIA — StorageAdapter
+   (hoje: localStorage · futuro: substituível por adapter Supabase)
+   ========================================================================= */
+const LocalStorageAdapter = {
+  key: 'vero_app_state',
+  get(){
+    try{ const raw = localStorage.getItem(this.key); return raw ? JSON.parse(raw) : null; }
+    catch(e){ console.error('Falha ao ler estado local:', e); return null; }
+  },
+  set(data){
+    try{ localStorage.setItem(this.key, JSON.stringify(data)); return true; }
+    catch(e){ console.error('Falha ao salvar estado local:', e); return false; }
+  },
+  remove(){
+    try{ localStorage.removeItem(this.key); return true; }
+    catch(e){ console.error('Falha ao limpar estado local:', e); return false; }
+  }
+};
+const StorageAdapter = LocalStorageAdapter; // ponto único de troca futura (Supabase)
+
+/* =========================================================================
+   SUPABASE CONFIGURATION
+   Substitua os valores abaixo pelas credenciais do seu projeto Supabase.
+   Utilize SOMENTE a chave "anon/public" — nunca a service_role.
+   ========================================================================= */
+const SUPABASE_URL = 'https://yzfcspiubrbmbdintmyl.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'sb_publishable_5qKY5YHglOIGc-A8M1MLag_EBFr1Nc5';
+
+let supabaseClient = null;
+function initSupabase(){
+  if(!window.supabase || SUPABASE_URL.includes('SEU-PROJETO')){
+    console.error('Supabase não configurado: defina SUPABASE_URL e SUPABASE_ANON_KEY.');
+    return null;
+  }
+  return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+  });
+}
+
+/* =========================================================================
+   GAMIFICATION CONFIGURATION
+   Valores centralizados e fáceis de ajustar: pontos de XP por ação,
+   progressão de níveis e conquistas. Nada aqui penaliza a usuária —
+   XP só é ganho, nunca removido.
+   ========================================================================= */
+const XP_VALUES = { mealLog:5, waterLog:2, movementLog:5, weightLog:8, measurementLog:8, achievementBonus:10 };
+const LEVELS = [
+  { name:'Exploradora', minXp:0 },
+  { name:'Viajante', minXp:100 },
+  { name:'Guardiã', minXp:300 },
+  { name:'Mestra', minXp:700 },
+  { name:'Lenda', minXp:1500 }
+];
+const ACHIEVEMENTS = [
+  { id:'first_meal', title:'Primeira refeição registrada', check:(s) => s.logs.some(l=>l.category==='meal') },
+  { id:'first_week', title:'Primeira semana de registros', check:(s) => new Set(s.logs.map(l=>l.date)).size >= 7 },
+  { id:'first_weight', title:'Primeira avaliação de peso', check:(s) => s.weightHistory.length >= 1 },
+  { id:'first_hydration_goal', title:'Primeira meta de hidratação batida', check:(s) => {
+      const byDate = {}; s.logs.filter(l=>l.category==='hydration').forEach(l => byDate[l.date] = (byDate[l.date]||0) + (Number(l.amount)||0));
+      return Object.values(byDate).some(v => v >= (s.hydration.goalMl||2000));
+    } },
+  { id:'first_activity', title:'Primeira atividade de movimento', check:(s) => s.logs.some(l=>l.category==='movement') },
+  { id:'consistency_streak', title:'Sequência de consistência', check:(s) => computeStreak() >= 3 },
+  { id:'first_measurement_compare', title:'Primeira comparação de medidas', check:(s) => s.measurementsHistory.length >= 2 }
+];
+
+
+function defaultMealPlan(){
+  return {
+    breakfast: { time:'07:00', enabled:true, title:'Café da manhã', options:[
+      { id:genId('opt'), label:'Ovos com pão integral', note:'2 ovos mexidos ou cozidos, 1 fatia de pão integral, 1 fruta pequena, café sem açúcar' },
+      { id:genId('opt'), label:'Iogurte com aveia', note:'1 iogurte natural sem açúcar, 2 col. sopa de aveia, 1 banana pequena, canela' },
+      { id:genId('opt'), label:'Tapioca com ovos', note:'1 tapioca pequena (2 col. sopa de goma), 2 ovos, café sem açúcar' },
+      { id:genId('opt'), label:'Whey shake', note:'1 scoop de whey (25–30g), 200–250ml de água ou leite, 1 banana pequena, 1 col. sopa de aveia' }
+    ]},
+    morningSnack: { time:'10:00', enabled:true, optional:true, title:'Lanche da manhã', options:[
+      { id:genId('opt'), label:'Maçã', note:'' }, { id:genId('opt'), label:'Pera', note:'' },
+      { id:genId('opt'), label:'Banana pequena', note:'' }, { id:genId('opt'), label:'Mexerica', note:'' },
+      { id:genId('opt'), label:'Mamão', note:'' }, { id:genId('opt'), label:'Iogurte natural sem açúcar', note:'' }
+    ]},
+    lunch: { time:'12:30', enabled:true, title:'Almoço', info:'Verduras e legumes à vontade · Carboidrato: 3 col. sopa de arroz OU 1 batata pequena OU 2 pedaços de mandioca · Feijão: ½ concha · Proteína: 100–150g de frango, carne magra, peixe ou 2 ovos + outra proteína · Bebida: água, água com gás ou Coca Zero (até 1 lata/dia)' },
+    afternoonSnack: { time:'16:00', enabled:true, title:'Lanche da tarde', options:[
+      { id:genId('opt'), label:'Whey com fruta', note:'1 scoop de whey, 200–250ml de água, 1 fruta' },
+      { id:genId('opt'), label:'Iogurte com fruta', note:'1 iogurte natural/proteico sem açúcar, 1 fruta' },
+      { id:genId('opt'), label:'Fruta com castanhas', note:'1 fruta, 10 castanhas ou amendoins' },
+      { id:genId('opt'), label:'Ovo cozido com fruta', note:'1 ovo cozido, 1 fruta' },
+      { id:genId('opt'), label:'Pão com frango ou queijo', note:'1 fatia de pão integral, frango desfiado ou queijo branco' }
+    ]},
+    arrivalHome: { time:'18:00', enabled:true, title:'Chegada em casa', options:[
+      { id:genId('opt'), label:'Fruta', note:'' }, { id:genId('opt'), label:'Iogurte natural', note:'' },
+      { id:genId('opt'), label:'Ovo cozido + fruta', note:'' }, { id:genId('opt'), label:'Whey + água + fruta', note:'caso não tenha sido consumido às 16h' }
+    ]},
+    dinner: { time:'19:30', enabled:true, title:'Jantar', options:[
+      { id:genId('opt'), label:'Arroz, feijão e proteína', note:'2 col. sopa de arroz, ½ concha de feijão, 100–120g de frango/carne/peixe, legumes' },
+      { id:genId('opt'), label:'Ovos cozidos com legumes', note:'2 ovos cozidos, legumes, 1 fatia de pão integral' },
+      { id:genId('opt'), label:'Sopa de legumes', note:'sopa de legumes com frango ou carne' },
+      { id:genId('opt'), label:'Frango com salada', note:'100–120g de frango desfiado, salada grande, 1 batata pequena' },
+      { id:genId('opt'), label:'Ovos com arroz e feijão', note:'2 ovos, 2 col. sopa de arroz, ½ concha de feijão, legumes' }
+    ]},
+    nightHunger: { time:'21:00', enabled:true, title:'Fome noturna' }
+  };
+}
+function defaultShoppingList(){
+  const cat = (category, names) => names.map(name => ({ id:genId('sl'), category, name, checked:false, custom:false }));
+  return [
+    ...cat('Proteínas', ['Frango','Patinho/carne magra','Peixe','Carne moída magra','Ovos','Queijo minas','Iogurte natural','Whey']),
+    ...cat('Carboidratos', ['Arroz','Feijão','Aveia','Pão integral','Batata','Mandioca','Tapioca']),
+    ...cat('Frutas', ['Banana','Maçã','Mamão','Mexerica','Pera','Morango']),
+    ...cat('Legumes e verduras', ['Cenoura','Abobrinha','Brócolis','Tomate','Pepino','Alface','Couve','Repolho','Chuchu','Vagem']),
+    ...cat('Emergência', ['Ovos cozidos','Iogurtes','Frutas','Castanhas','Frango desfiado congelado'])
+  ];
+}
+function defaultMovementActivities(){
+  return [
+    { id:'walk', name:'Caminhada', description:'Um passeio no seu ritmo, sem pressa.', custom:false },
+    { id:'stairs', name:'Escadas', description:'Se fizer sentido para você, use alguns lances de escada.', custom:false },
+    { id:'squats', name:'Agachamento', description:'Faça algumas repetições em um ritmo confortável.', custom:false },
+    { id:'calf', name:'Panturrilha', description:'Eleve os calcanhares e retorne devagar.', custom:false },
+    { id:'stretch', name:'Alongamento', description:'Alongue devagar, sem forçar.', custom:false },
+    { id:'active_pause', name:'Pausa ativa', description:'Levante, caminhe um pouco, alongue ou beba alguns goles de água.', custom:false }
+  ];
+}
+function defaultAppState(){
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return {
+    meta: { onboarded:false, createdAt:new Date().toISOString(), profileUpdatedAt:null, settingsUpdatedAt:null, stateUpdatedAt:null, routineUpdatedAt:null, moduleSettingsUpdatedAt:null },
+    profile: { id:genId('profile'), name:'', nickname:'', birth:'', sex:'Feminino', height:null, weightInitial:87, note:'' },
+    goals: { main:'', weightGoal:82.5, waistGoal:null, hydrationGoal:null, movementGoal:null, custom:'' },
+    weightHistory: [], // { id, date, weight, note }
+    measurementsHistory: [], // { id, date, waist, hip, bust, armRight, armLeft, thighRight, thighLeft, calfRight, calfLeft, note }
+    routine: {
+      wake:'07:00', sleep:'23:00', workStart:'08:00', workEnd:'17:50',
+      leaveHome:'07:00', commuteMinutes:10, returnHome:'18:00',
+      weeklySchedule:{ seg:'trabalho', ter:'trabalho', qua:'trabalho', qui:'trabalho', sex:'trabalho', sab:'folga', dom:'folga' }
+    },
+    nutrition:{ mealPlan:defaultMealPlan(), cocaZeroGoal:350, wheyPlannedQty:1, wheyPreferredTime:'16:00', shoppingList:defaultShoppingList() },
+    hydration:{ bottleMl:800, cupMl:250, goalMl:2000, reminderStart:'08:00', reminderEnd:'21:00', reminderInterval:60, quiet:false },
+    movement:{ activities:defaultMovementActivities() },
+    sleep:{},
+    logs:[], // { id, category:'meal'|'hydration'|'movement'|'habit', ref, status, amount, note, date, createdAt }
+    progress:{ missionsByDate:{} },
+    gamification:{ xp:0, achievements:[] }, // level é derivado do xp via computeLevel()
+    preferences:{ theme:'galaxy', mode:'dark', fontScale:1, anim: prefersReduced ? 'reduced' : 'full', audio:false, voice:false, volume:60, voiceRate:100 },
+    notifications:{ water:true, food:true, movement:false, sleep:false, messages:true, quietStart:'22:00', quietEnd:'07:00' },
+    specialDates:[] // { id, dateStart, dateEnd, type, title, note, customStart, customEnd, customLeave, customReturn }
+  };
+}
+function mergeDefaults(def, saved){
+  const out = Object.assign({}, def, saved || {});
+  ['meta','profile','goals','routine','progress','gamification','preferences','notifications','hydration','movement'].forEach(k=>{
+    out[k] = Object.assign({}, def[k], (saved||{})[k] || {});
+  });
+  out.routine.weeklySchedule = Object.assign({}, def.routine.weeklySchedule, ((saved||{}).routine||{}).weeklySchedule || {});
+  out.progress.missionsByDate = ((saved||{}).progress||{}).missionsByDate || {};
+  out.gamification.achievements = Array.isArray(((saved||{}).gamification||{}).achievements) ? saved.gamification.achievements : [];
+  out.specialDates = Array.isArray((saved||{}).specialDates) ? saved.specialDates : [];
+  out.weightHistory = Array.isArray((saved||{}).weightHistory) ? saved.weightHistory : [];
+  out.measurementsHistory = Array.isArray((saved||{}).measurementsHistory) ? saved.measurementsHistory : [];
+  out.logs = Array.isArray((saved||{}).logs) ? saved.logs : [];
+  out.movement.activities = Array.isArray(((saved||{}).movement||{}).activities) ? saved.movement.activities : def.movement.activities;
+  const savedNutrition = (saved||{}).nutrition || {};
+  out.nutrition = Object.assign({}, def.nutrition, savedNutrition);
+  out.nutrition.mealPlan = savedNutrition.mealPlan ? Object.assign({}, def.nutrition.mealPlan, savedNutrition.mealPlan) : def.nutrition.mealPlan;
+  out.nutrition.shoppingList = Array.isArray(savedNutrition.shoppingList) ? savedNutrition.shoppingList : def.nutrition.shoppingList;
+  return out;
+}
+function loadAppState(){ const saved = StorageAdapter.get(); return saved ? mergeDefaults(defaultAppState(), saved) : defaultAppState(); }
+function saveAppState(){ const ok = StorageAdapter.set(appState); if(!ok) showToast('Sem problema. Podemos tentar novamente.'); return ok; }
+function resetAppState(){ StorageAdapter.remove(); location.reload(); }
+
+let appState = loadAppState();
+const STATE = { view:'hoje' };
+
+/* =========================================================================
+   SUPABASE STORAGE ADAPTER
+   (camada equivalente ao LocalStorageAdapter — troca sem mudar a UI)
+   ========================================================================= */
+const SupabaseStorageAdapter = {
+  async loadProfile(userId){
+    const { data, error } = await supabaseClient.from('profiles').select('*').eq('user_id', userId).maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async saveProfile(userId, profile){
+    const payload = {
+      user_id:userId, name:profile.name||null, nickname:profile.nickname||null, birth_date:profile.birth||null,
+      sex:profile.sex||null, height:profile.height, initial_weight:profile.weightInitial, note:profile.note||null,
+      updated_at:new Date().toISOString()
+    };
+    const { data, error } = await supabaseClient.from('profiles').upsert(payload, { onConflict:'user_id' }).select().maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async loadSettings(userId){
+    const { data, error } = await supabaseClient.from('app_settings').select('*').eq('user_id', userId).maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async saveSettings(userId, prefs){
+    const payload = {
+      user_id:userId, theme:prefs.theme, color_mode:prefs.mode, font_size:prefs.fontScale,
+      animations:prefs.anim, sound_enabled:prefs.audio, notifications_enabled:true, quiet_mode:false,
+      updated_at:new Date().toISOString()
+    };
+    const { data, error } = await supabaseClient.from('app_settings').upsert(payload, { onConflict:'user_id' }).select().maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async loadState(userId){
+    const { data, error } = await supabaseClient.from('app_state').select('*').eq('user_id', userId).maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async saveState(userId, stateBlob){
+    const payload = { user_id:userId, state:stateBlob, updated_at:new Date().toISOString() };
+    const { data, error } = await supabaseClient.from('app_state').upsert(payload, { onConflict:'user_id' }).select().maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+
+  async loadRoutine(userId){
+    const { data, error } = await supabaseClient.from('routines').select('*').eq('user_id', userId).maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async saveRoutine(userId, routine){
+    const payload = {
+      user_id:userId, wake:routine.wake, sleep:routine.sleep, work_start:routine.workStart, work_end:routine.workEnd,
+      leave_home:routine.leaveHome, commute_minutes:routine.commuteMinutes, return_home:routine.returnHome,
+      weekly_schedule:routine.weeklySchedule, updated_at:new Date().toISOString()
+    };
+    const { data, error } = await supabaseClient.from('routines').upsert(payload, { onConflict:'user_id' }).select().maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+
+  async loadWeightHistory(userId){
+    const { data, error } = await supabaseClient.from('weight_history').select('*').eq('user_id', userId).order('measured_at', { ascending:false });
+    if(error) throw error;
+    return data || [];
+  },
+  async addWeightEntry(userId, entry){
+    const payload = { id:entry.id, user_id:userId, weight:entry.weight, measured_at:entry.date, note:entry.note||null };
+    const { error } = await supabaseClient.from('weight_history').insert(payload);
+    if(error) throw error;
+  },
+  async deleteWeightEntry(id){
+    const { error } = await supabaseClient.from('weight_history').delete().eq('id', id);
+    if(error) throw error;
+  },
+
+  async loadMeasurements(userId){
+    const { data, error } = await supabaseClient.from('profile_measurements').select('*').eq('user_id', userId).order('measured_at', { ascending:false });
+    if(error) throw error;
+    return data || [];
+  },
+  async upsertMeasurement(userId, m){
+    const payload = {
+      id:m.id, user_id:userId, measured_at:m.date, waist:m.waist, hip:m.hip, bust:m.bust,
+      arm_right:m.armRight, arm_left:m.armLeft, thigh_right:m.thighRight, thigh_left:m.thighLeft,
+      calf_right:m.calfRight, calf_left:m.calfLeft, note:m.note||null
+    };
+    const { error } = await supabaseClient.from('profile_measurements').upsert(payload, { onConflict:'id' });
+    if(error) throw error;
+  },
+  async deleteMeasurement(id){
+    const { error } = await supabaseClient.from('profile_measurements').delete().eq('id', id);
+    if(error) throw error;
+  },
+
+  async loadSpecialDates(userId){
+    const { data, error } = await supabaseClient.from('special_dates').select('*').eq('user_id', userId).order('date_start', { ascending:true });
+    if(error) throw error;
+    return data || [];
+  },
+  async upsertSpecialDate(userId, sd){
+    const payload = {
+      id:sd.id, user_id:userId, date_start:sd.dateStart, date_end:sd.dateEnd || sd.dateStart, type:sd.type,
+      title:sd.title||null, note:sd.note||null, custom_start:sd.customStart||null, custom_end:sd.customEnd||null,
+      custom_leave:sd.customLeave||null, custom_return:sd.customReturn||null, updated_at:new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('special_dates').upsert(payload, { onConflict:'id' });
+    if(error) throw error;
+  },
+  async deleteSpecialDate(id){
+    const { error } = await supabaseClient.from('special_dates').delete().eq('id', id);
+    if(error) throw error;
+  },
+
+  async loadModuleSettings(userId){
+    const { data, error } = await supabaseClient.from('module_settings').select('*').eq('user_id', userId).maybeSingle();
+    if(error) throw error;
+    return data;
+  },
+  async saveModuleSettings(userId, nutrition, hydration, movement){
+    const payload = { user_id:userId, nutrition, hydration, movement, updated_at:new Date().toISOString() };
+    const { error } = await supabaseClient.from('module_settings').upsert(payload, { onConflict:'user_id' });
+    if(error) throw error;
+  },
+
+  async loadLogs(userId, sinceDate){
+    let query = supabaseClient.from('activity_logs').select('*').eq('user_id', userId).order('occurred_at', { ascending:false });
+    if(sinceDate) query = query.gte('occurred_at', sinceDate);
+    const { data, error } = await query;
+    if(error) throw error;
+    return data || [];
+  },
+  async addLog(userId, log){
+    const payload = {
+      id:log.id, user_id:userId, category:log.category, ref:log.ref||null, status:log.status||null,
+      amount:log.amount ?? null, note:log.note||null, occurred_at:log.date
+    };
+    const { error } = await supabaseClient.from('activity_logs').insert(payload);
+    if(error) throw error;
+  },
+  async deleteLog(id){
+    const { error } = await supabaseClient.from('activity_logs').delete().eq('id', id);
+    if(error) throw error;
+  }
+};
+
+/* =========================================================================
+   ESTADO DE AUTENTICAÇÃO E SINCRONIZAÇÃO
+   ========================================================================= */
+const authState = { status:'loading', user:null }; // loading | authenticated | unauthenticated | error
+let appInitialized = false;
+
+function friendlyAuthError(err){
+  const msg = (err && err.message) || '';
+  if(/invalid login credentials/i.test(msg)) return 'E-mail ou senha incorretos.';
+  if(/email not confirmed/i.test(msg)) return 'Confirme seu e-mail antes de entrar.';
+  if(/network/i.test(msg)) return 'Sem conexão no momento. Tente novamente.';
+  return 'Não foi possível entrar agora. Tente novamente.';
+}
+function showAuthStep(step){ $$('.auth-step').forEach(s => s.classList.toggle('active', s.dataset.authStep === step)); }
+function setAuthError(id, message){
+  const el = $(id);
+  if(!message){ el.hidden = true; el.textContent=''; return; }
+  el.textContent = message; el.hidden = false;
+}
+
+function setSyncStatus(status){
+  const labels = { online:'Sincronizado', offline:'Modo offline', syncing:'Sincronizando…', error:'Não foi possível sincronizar agora.' };
+  [['#syncBadge','#syncBadgeText'],['#syncBadgeDesktop','#syncBadgeTextDesktop'],['#syncBadgeConfig','#syncBadgeTextConfig']].forEach(([badgeSel,textSel])=>{
+    const badge = $(badgeSel), text = $(textSel);
+    if(!badge) return;
+    badge.setAttribute('data-status', status);
+    text.textContent = labels[status] || labels.offline;
+  });
+}
+
+async function pushProfile(){
+  if(authState.status !== 'authenticated' || !supabaseClient) return;
+  if(!navigator.onLine){ setSyncStatus('offline'); showToast('Alteração salva neste dispositivo. Vamos sincronizar quando a conexão voltar.'); return; }
+  setSyncStatus('syncing');
+  try{
+    await SupabaseStorageAdapter.saveProfile(authState.user.id, appState.profile);
+    appState.meta.profileUpdatedAt = new Date().toISOString();
+    saveAppState();
+    setSyncStatus('online');
+  }catch(e){ console.error('Falha ao sincronizar perfil:', e); setSyncStatus('error'); }
+}
+async function pushSettings(){
+  if(authState.status !== 'authenticated' || !supabaseClient) return;
+  if(!navigator.onLine){ setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{
+    await SupabaseStorageAdapter.saveSettings(authState.user.id, appState.preferences);
+    appState.meta.settingsUpdatedAt = new Date().toISOString();
+    saveAppState();
+    setSyncStatus('online');
+  }catch(e){ console.error('Falha ao sincronizar preferências:', e); setSyncStatus('error'); }
+}
+async function pushState(){
+  if(authState.status !== 'authenticated' || !supabaseClient) return;
+  if(!navigator.onLine){ setSyncStatus('offline'); showToast('Alteração salva neste dispositivo. Vamos sincronizar quando a conexão voltar.'); return; }
+  setSyncStatus('syncing');
+  try{
+    const blob = { notifications:appState.notifications, progress:appState.progress, goals:appState.goals, extraPrefs:{ voice:appState.preferences.voice, volume:appState.preferences.volume, voiceRate:appState.preferences.voiceRate }, meta:{ onboarded:appState.meta.onboarded } };
+    await SupabaseStorageAdapter.saveState(authState.user.id, blob);
+    appState.meta.stateUpdatedAt = new Date().toISOString();
+    saveAppState();
+    setSyncStatus('online');
+  }catch(e){ console.error('Falha ao sincronizar estado:', e); setSyncStatus('error'); }
+}
+async function pushRoutine(){
+  if(authState.status !== 'authenticated' || !supabaseClient) return;
+  if(!navigator.onLine){ setSyncStatus('offline'); showToast('Alteração salva neste dispositivo. Vamos sincronizar quando a conexão voltar.'); return; }
+  setSyncStatus('syncing');
+  try{
+    await SupabaseStorageAdapter.saveRoutine(authState.user.id, appState.routine);
+    appState.meta.routineUpdatedAt = new Date().toISOString();
+    saveAppState();
+    setSyncStatus('online');
+  }catch(e){ console.error('Falha ao sincronizar rotina:', e); setSyncStatus('error'); }
+}
+async function pushWeightEntry(entry){
+  if(authState.status !== 'authenticated' || !supabaseClient){ if(!navigator.onLine || !supabaseClient) setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{ await SupabaseStorageAdapter.addWeightEntry(authState.user.id, entry); setSyncStatus('online'); }
+  catch(e){ console.error('Falha ao sincronizar peso:', e); setSyncStatus('error'); }
+}
+async function pushMeasurement(entry){
+  if(authState.status !== 'authenticated' || !supabaseClient){ if(!navigator.onLine || !supabaseClient) setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{ await SupabaseStorageAdapter.upsertMeasurement(authState.user.id, entry); setSyncStatus('online'); }
+  catch(e){ console.error('Falha ao sincronizar medição:', e); setSyncStatus('error'); }
+}
+async function pushSpecialDate(entry){
+  if(authState.status !== 'authenticated' || !supabaseClient){ if(!navigator.onLine || !supabaseClient) setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{ await SupabaseStorageAdapter.upsertSpecialDate(authState.user.id, entry); setSyncStatus('online'); }
+  catch(e){ console.error('Falha ao sincronizar data especial:', e); setSyncStatus('error'); }
+}
+async function removeRemoteWeightEntry(id){ if(!supabaseClient || !navigator.onLine) return; try{ await SupabaseStorageAdapter.deleteWeightEntry(id); }catch(e){ console.error('Falha ao remover peso remoto:', e); } }
+async function removeRemoteMeasurement(id){ if(!supabaseClient || !navigator.onLine) return; try{ await SupabaseStorageAdapter.deleteMeasurement(id); }catch(e){ console.error('Falha ao remover medição remota:', e); } }
+async function removeRemoteSpecialDate(id){ if(!supabaseClient || !navigator.onLine) return; try{ await SupabaseStorageAdapter.deleteSpecialDate(id); }catch(e){ console.error('Falha ao remover data especial remota:', e); } }
+
+async function pushModuleSettings(){
+  if(authState.status !== 'authenticated' || !supabaseClient){ if(!navigator.onLine || !supabaseClient) setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{
+    await SupabaseStorageAdapter.saveModuleSettings(authState.user.id, appState.nutrition, appState.hydration, appState.movement);
+    appState.meta.moduleSettingsUpdatedAt = new Date().toISOString();
+    saveAppState();
+    setSyncStatus('online');
+  }catch(e){ console.error('Falha ao sincronizar módulos:', e); setSyncStatus('error'); }
+}
+async function pushLog(entry){
+  if(authState.status !== 'authenticated' || !supabaseClient){ if(!navigator.onLine || !supabaseClient) setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  try{ await SupabaseStorageAdapter.addLog(authState.user.id, entry); setSyncStatus('online'); }
+  catch(e){ console.error('Falha ao sincronizar registro:', e); setSyncStatus('error'); }
+}
+async function removeRemoteLog(id){ if(!supabaseClient || !navigator.onLine) return; try{ await SupabaseStorageAdapter.deleteLog(id); }catch(e){ console.error('Falha ao remover registro remoto:', e); } }
+
+async function syncFromRemoteOnLogin(){
+  setSyncStatus('syncing');
+  try{
+    const userId = authState.user.id;
+    const [remoteProfile, remoteSettings, remoteState, remoteRoutine, remoteWeights, remoteMeasurements, remoteSpecialDates, remoteModuleSettings, remoteLogs] = await Promise.all([
+      SupabaseStorageAdapter.loadProfile(userId),
+      SupabaseStorageAdapter.loadSettings(userId),
+      SupabaseStorageAdapter.loadState(userId),
+      SupabaseStorageAdapter.loadRoutine(userId),
+      SupabaseStorageAdapter.loadWeightHistory(userId),
+      SupabaseStorageAdapter.loadMeasurements(userId),
+      SupabaseStorageAdapter.loadSpecialDates(userId),
+      SupabaseStorageAdapter.loadModuleSettings(userId),
+      SupabaseStorageAdapter.loadLogs(userId, todayKeyMinusDays(120))
+    ]);
+
+    if(remoteProfile && (!appState.meta.profileUpdatedAt || remoteProfile.updated_at > appState.meta.profileUpdatedAt)){
+      appState.profile = {
+        id:appState.profile.id, name:remoteProfile.name||'', nickname:remoteProfile.nickname||'', birth:remoteProfile.birth_date||'',
+        sex:remoteProfile.sex||'Feminino', height:remoteProfile.height, weightInitial:remoteProfile.initial_weight, note:remoteProfile.note||''
+      };
+      appState.meta.profileUpdatedAt = remoteProfile.updated_at;
+    } else if(!remoteProfile){
+      await SupabaseStorageAdapter.saveProfile(userId, appState.profile).catch(e=>console.error('Falha ao criar perfil inicial:', e));
+    }
+
+    if(remoteSettings && (!appState.meta.settingsUpdatedAt || remoteSettings.updated_at > appState.meta.settingsUpdatedAt)){
+      appState.preferences = {
+        theme:remoteSettings.theme||'galaxy', mode:remoteSettings.color_mode||'dark',
+        fontScale:remoteSettings.font_size||1, anim:remoteSettings.animations||'full', audio:remoteSettings.sound_enabled !== false
+      };
+      appState.meta.settingsUpdatedAt = remoteSettings.updated_at;
+    }
+
+    if(remoteRoutine && (!appState.meta.routineUpdatedAt || remoteRoutine.updated_at > appState.meta.routineUpdatedAt)){
+      appState.routine = {
+        wake:remoteRoutine.wake, sleep:remoteRoutine.sleep, workStart:remoteRoutine.work_start, workEnd:remoteRoutine.work_end,
+        leaveHome:remoteRoutine.leave_home, commuteMinutes:remoteRoutine.commute_minutes, returnHome:remoteRoutine.return_home,
+        weeklySchedule:remoteRoutine.weekly_schedule || appState.routine.weeklySchedule
+      };
+      appState.meta.routineUpdatedAt = remoteRoutine.updated_at;
+    } else if(!remoteRoutine){
+      await SupabaseStorageAdapter.saveRoutine(userId, appState.routine).catch(e=>console.error('Falha ao criar rotina inicial:', e));
+    }
+
+    if(remoteState && remoteState.state && (!appState.meta.stateUpdatedAt || remoteState.updated_at > appState.meta.stateUpdatedAt)){
+      const s = remoteState.state;
+      if(s.notifications) appState.notifications = s.notifications;
+      if(s.progress) appState.progress = s.progress;
+      if(s.goals) appState.goals = s.goals;
+      if(s.extraPrefs) Object.assign(appState.preferences, s.extraPrefs);
+      if(s.meta && s.meta.onboarded) appState.meta.onboarded = true;
+      appState.meta.stateUpdatedAt = remoteState.updated_at;
+    }
+
+    if(Array.isArray(remoteWeights) && remoteWeights.length){
+      appState.weightHistory = remoteWeights.map(w => ({ id:w.id, date:w.measured_at, weight:Number(w.weight), note:w.note||'' }));
+    }
+    if(Array.isArray(remoteMeasurements) && remoteMeasurements.length){
+      appState.measurementsHistory = remoteMeasurements.map(m => ({
+        id:m.id, date:m.measured_at, waist:m.waist, hip:m.hip, bust:m.bust, armRight:m.arm_right, armLeft:m.arm_left,
+        thighRight:m.thigh_right, thighLeft:m.thigh_left, calfRight:m.calf_right, calfLeft:m.calf_left, note:m.note||''
+      }));
+    }
+    if(Array.isArray(remoteSpecialDates) && remoteSpecialDates.length){
+      appState.specialDates = remoteSpecialDates.map(sd => ({
+        id:sd.id, dateStart:sd.date_start, dateEnd:sd.date_end, type:sd.type, title:sd.title||'', note:sd.note||'',
+        customStart:sd.custom_start||'', customEnd:sd.custom_end||'', customLeave:sd.custom_leave||'', customReturn:sd.custom_return||''
+      }));
+    }
+
+    if(remoteModuleSettings && (!appState.meta.moduleSettingsUpdatedAt || remoteModuleSettings.updated_at > appState.meta.moduleSettingsUpdatedAt)){
+      if(remoteModuleSettings.nutrition) appState.nutrition = remoteModuleSettings.nutrition;
+      if(remoteModuleSettings.hydration) appState.hydration = remoteModuleSettings.hydration;
+      if(remoteModuleSettings.movement) appState.movement = remoteModuleSettings.movement;
+      appState.meta.moduleSettingsUpdatedAt = remoteModuleSettings.updated_at;
+    } else if(!remoteModuleSettings){
+      await SupabaseStorageAdapter.saveModuleSettings(userId, appState.nutrition, appState.hydration, appState.movement).catch(e=>console.error('Falha ao criar módulos iniciais:', e));
+    }
+
+    if(Array.isArray(remoteLogs)){
+      appState.logs = remoteLogs.map(l => ({ id:l.id, category:l.category, ref:l.ref, status:l.status, amount:l.amount, note:l.note||'', date:l.occurred_at, createdAt:l.created_at }));
+    }
+
+    saveAppState();
+    setSyncStatus('online');
+  }catch(e){
+    console.error('Falha na sincronização inicial:', e);
+    setSyncStatus('error');
+    showToast('Não foi possível sincronizar agora. Seus dados locais continuam seguros.');
+  }
+}
+
+
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+function showToast(msg){
+  const t = $('#toastRoot');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* =========================================================================
+   MODAL (reutilizável — confirmação, edição, exclusão)
+   ========================================================================= */
+function closeModal(){ $('#modalRoot').hidden = true; }
+function setModal(title, bodyHTML, actionsHTML){
+  $('#modalTitle').textContent = title;
+  $('#modalBody').innerHTML = bodyHTML;
+  $('#modalActions').innerHTML = actionsHTML;
+  $('#modalRoot').hidden = false;
+}
+
+/* =========================================================================
+   TEMA / MODO / FONTE / ANIMAÇÕES (persistidos em appState.preferences)
+   ========================================================================= */
+function applyTheme(theme){
+  document.body.setAttribute('data-theme', theme);
+  appState.preferences.theme = theme;
+  $$('#themeGrid .theme-swatch').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeChoice === theme)));
+}
+function applyMode(mode){
+  const effective = mode === 'auto'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : mode;
+  document.body.setAttribute('data-mode', effective);
+  appState.preferences.mode = mode;
+  $$('#modeGroup .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modeChoice === mode)));
+}
+function applyFont(scale){
+  document.documentElement.style.setProperty('--fs-scale', scale);
+  appState.preferences.fontScale = scale;
+  $$('#fontGroup .chip').forEach(b => b.setAttribute('aria-pressed', String(parseFloat(b.dataset.fontChoice) === scale)));
+}
+function applyAnim(mode){ // 'full' | 'reduced' | 'off'
+  document.body.setAttribute('data-anim', mode === 'full' ? 'on' : mode);
+  appState.preferences.anim = mode;
+  $$('#animGroup .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.animChoice === mode)));
+}
+
+/* =========================================================================
+   NAVEGAÇÃO (SPA sem reload)
+   ========================================================================= */
+function switchView(view){
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  STATE.view = view;
+  $('#view-root').scrollTo({top:0, behavior: appState.preferences.anim === 'off' ? 'auto' : 'smooth'});
+  if(view === 'config') populateConfigForm();
+  if(view === 'alimentacao') renderAlimentacaoView();
+  if(view === 'movimento') renderMovementView();
+  if(view === 'evolucao') renderEvolucao();
+}
+
+/* =========================================================================
+   ROTINA — INFORMAÇÕES DO DIA
+   ========================================================================= */
+const SPECIAL_TYPE_LABELS = {
+  folga:'Folga', feriado:'Feriado', ferias:'Férias', recesso:'Recesso', ausencia:'Ausência',
+  trabalho_excepcional:'Trabalho excepcional', consulta_compromisso:'Consulta/Compromisso',
+  horario_personalizado:'Horário personalizado', outro:'Outro'
+};
+const DAY_MESSAGES = {
+  trabalho:'Hoje é dia de trabalho. Um passo de cada vez.',
+  indisponivel:'Hoje é um dia mais tranquilo.',
+  personalizado:'Hoje sua rotina está um pouquinho diferente.',
+  folga:'Hoje você está de folga.',
+  feriado:'Hoje é feriado. Aproveite o seu dia.',
+  ferias:'Hoje faz parte das suas férias.',
+  recesso:'Hoje é um dia fora da rotina.',
+  ausencia:'Tudo bem. Cuide-se hoje.',
+  trabalho_excepcional:'Hoje foge um pouco do habitual — sem problema.',
+  consulta_compromisso:'Hoje você tem um compromisso especial.',
+  horario_personalizado:'Hoje sua rotina está um pouquinho diferente.',
+  outro:'Hoje é um dia diferente do habitual.'
+};
+function isDateInRange(dateStr, sd){ return dateStr >= sd.dateStart && dateStr <= (sd.dateEnd || sd.dateStart); }
+function getDateInfo(dateStr){
+  // Prioridade: 1) exceção/período especial da data  2) horário personalizado (já coberto acima)  3) rotina semanal
+  const key = dateStr || todayKey();
+  const special = appState.specialDates.find(sd => isDateInRange(key, sd));
+  if(special) return { type:special.type, title:special.title, note:special.note, special:true, entry:special };
+  const dow = dayOfWeekKey(new Date(key + 'T00:00:00'));
+  const scheduled = appState.routine.weeklySchedule[dow] || 'trabalho';
+  return { type:scheduled, special:false };
+}
+function getTodayInfo(){ return getDateInfo(todayKey()); }
+
+
+/* =========================================================================
+   LOGS UNIFICADOS (refeição / hidratação / movimento / hábito)
+   ========================================================================= */
+function addLogEntry(category, ref, status, amount, note, date){
+  const entry = { id:genUUID(), category, ref:ref||null, status:status||null, amount: amount ?? null, note: note||'', date: date || todayKey(), createdAt:new Date().toISOString() };
+  appState.logs.push(entry);
+  saveAppState();
+  pushLog(entry);
+  if(category === 'meal') awardXP(XP_VALUES.mealLog, 'meal');
+  else if(category === 'hydration') awardXP(XP_VALUES.waterLog, 'water');
+  else if(category === 'movement') awardXP(XP_VALUES.movementLog, 'movement');
+  // categoria 'habit' (doce, refrigerante, saiu da rotina) nunca concede nem retira XP — comida não é recompensa moral
+  else checkAchievements();
+  return entry;
+}
+function removeLogEntry(id){
+  appState.logs = appState.logs.filter(l => l.id !== id);
+  saveAppState();
+  removeRemoteLog(id);
+}
+function logsForDate(date, category){
+  return appState.logs.filter(l => l.date === date && (!category || l.category === category));
+}
+function sumAmount(logs){ return logs.reduce((s,l) => s + (Number(l.amount) || 0), 0); }
+function getTodayWaterMl(){ return sumAmount(logsForDate(todayKey(), 'hydration')); }
+function getTodayCocaMl(){ return sumAmount(logsForDate(todayKey(), 'habit').filter(l => l.ref === 'coca_zero')); }
+function isWheyDoneToday(){ return logsForDate(todayKey(), 'habit').some(l => l.ref === 'whey'); }
+function getTodayMovementLogs(){ return logsForDate(todayKey(), 'movement'); }
+function isMovementDoneToday(activityId){ return getTodayMovementLogs().some(l => l.ref === activityId); }
+function getMealLogToday(slotKey){
+  const logs = logsForDate(todayKey(), 'meal').filter(l => l.ref === slotKey);
+  return logs.length ? logs[logs.length-1] : null;
+}
+function getMealSlotsOrdered(){
+  return Object.entries(appState.nutrition.mealPlan)
+    .filter(([,slot]) => slot.enabled)
+    .sort((a,b) => a[1].time.localeCompare(b[1].time))
+    .map(([key,slot]) => ({ key, ...slot }));
+}
+
+/* =========================================================================
+   MISSÕES DO DIA (refeições + água + movimento, dados reais)
+   ========================================================================= */
+function getTodayMissions(){
+  const slots = getMealSlotsOrdered().map(slot => ({
+    id:'meal:'+slot.key, kind:'meal', ref:slot.key, title:slot.title, time:slot.time,
+    completed: !!getMealLogToday(slot.key)
+  }));
+  const water = { id:'water', kind:'water', title:'Água', time:'--', completed: getTodayWaterMl() >= appState.hydration.goalMl };
+  const movement = { id:'movement', kind:'movement', title:'Movimento do dia', time:'--', completed: getTodayMovementLogs().length > 0 };
+  return [...slots, water, movement];
+}
+function handleMissionClick(mission){
+  if(mission.kind === 'meal'){
+    if(mission.ref === 'nightHunger') openNightHungerModal();
+    else if(mission.ref === 'arrivalHome') openArrivalHomeModal();
+    else openMealModal(mission.ref);
+  } else if(mission.kind === 'water'){
+    openWaterCustomModal();
+  } else if(mission.kind === 'movement'){
+    switchView('movimento');
+  }
+}
+
+/* =========================================================================
+   RENDERIZAÇÃO
+   ========================================================================= */
+function greetingByHour(){
+  const h = new Date().getHours();
+  if(h < 12) return 'Bom dia,';
+  if(h < 18) return 'Boa tarde,';
+  return 'Boa noite,';
+}
+function renderGreeting(){
+  const hi = greetingByHour();
+  const name = appState.profile.name || 'Viajante';
+  $('#greetingText').textContent = hi;
+  $('#greetingName').textContent = name;
+  $('#greetingTextDesktop').textContent = hi;
+  $('#greetingNameDesktop').textContent = name;
+  renderGamificationBadges();
+}
+
+/* =========================================================================
+   GAMIFICAÇÃO — XP, níveis, conquistas, sequência
+   ========================================================================= */
+function computeLevel(xp){
+  let idx = 0;
+  for(let i=0;i<LEVELS.length;i++){ if(xp >= LEVELS[i].minXp) idx = i; }
+  const current = LEVELS[idx];
+  const next = LEVELS[idx+1];
+  const progressPct = next ? Math.round(((xp - current.minXp) / (next.minXp - current.minXp)) * 100) : 100;
+  return { index:idx, name:current.name, next: next ? next.name : null, xpForNext: next ? next.minXp : null, progressPct };
+}
+function computeStreak(){
+  const dates = new Set(appState.logs.map(l => l.date));
+  let streak = 0;
+  let cursor = new Date();
+  // permite que "hoje" ainda sem registro não quebre a sequência de ontem
+  if(!dates.has(todayKey(cursor))) cursor.setDate(cursor.getDate()-1);
+  while(dates.has(todayKey(cursor))){ streak++; cursor.setDate(cursor.getDate()-1); }
+  return streak;
+}
+function awardXP(amount, reason){
+  if(!amount) return;
+  const before = computeLevel(appState.gamification.xp);
+  appState.gamification.xp += amount;
+  const after = computeLevel(appState.gamification.xp);
+  saveAppState();
+  renderGamificationBadges();
+  if(after.index > before.index){
+    showToast('Novo nível: ' + after.name + ' ✨');
+    playSound('levelup');
+  }
+  checkAchievements();
+}
+function checkAchievements(){
+  ACHIEVEMENTS.forEach(a => {
+    if(appState.gamification.achievements.includes(a.id)) return;
+    let unlocked = false;
+    try{ unlocked = !!a.check(appState); }catch(e){ unlocked = false; }
+    if(unlocked){
+      appState.gamification.achievements.push(a.id);
+      saveAppState();
+      showToast('Conquista: ' + a.title + ' 🏆');
+      playSound('achievement');
+      renderGamificationBadges();
+    }
+  });
+}
+function renderGamificationBadges(){
+  const level = computeLevel(appState.gamification.xp);
+  const chip = $('#levelChip'); if(chip) chip.textContent = '✦ ' + level.name;
+
+  const bar = $('#levelProgressBar'), text = $('#levelProgressText');
+  if(bar && text){
+    bar.style.width = level.progressPct + '%';
+    text.textContent = level.next ? level.name + ' → ' + level.next : level.name + ' · nível máximo';
+  }
+
+  const gName = $('#gamifyLevelName'), gXp = $('#gamifyXpText'), gBar = $('#gamifyXpBar'), gStreak = $('#gamifyStreakText');
+  if(gName){
+    gName.textContent = level.name;
+    gXp.textContent = appState.gamification.xp + ' XP' + (level.xpForNext ? ' · próximo nível em ' + (level.xpForNext - appState.gamification.xp) + ' XP' : '');
+    gBar.style.width = level.progressPct + '%';
+    const streak = computeStreak();
+    gStreak.textContent = 'Sequência: ' + streak + (streak === 1 ? ' dia' : ' dias');
+  }
+  const list = $('#achievementsList');
+  if(list){
+    list.innerHTML = ACHIEVEMENTS.map(a => {
+      const unlocked = appState.gamification.achievements.includes(a.id);
+      return `<div class="config-item"><div class="config-item__text"><span class="config-item__label" style="${unlocked?'':'color:var(--text-muted);'}">${unlocked?'🏆':'🔒'} ${escapeHTML(a.title)}</span></div></div>`;
+    }).join('');
+  }
+}
+
+/* =========================================================================
+   SOM (Web Audio API) — efeitos curtos, nunca automáticos
+   ========================================================================= */
+let audioCtx = null;
+function ensureAudioCtx(){
+  if(audioCtx) return audioCtx;
+  try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+  return audioCtx;
+}
+function playTone(freq, duration){
+  if(!appState.preferences.audio) return;
+  const ctx = ensureAudioCtx();
+  if(!ctx) return;
+  try{
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = freq;
+    gain.gain.value = ((appState.preferences.volume ?? 60) / 100) * 0.12;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration/1000);
+  }catch(e){ /* silencioso: som é decorativo, nunca crítico */ }
+}
+function playSound(kind){
+  if(kind === 'achievement') playTone(660, 180);
+  else if(kind === 'levelup'){ playTone(523, 120); setTimeout(()=>playTone(784, 200), 130); }
+  else if(kind === 'tick') playTone(880, 70);
+}
+
+/* =========================================================================
+   VOZ (SpeechSynthesis) — somente por ação explícita da usuária
+   ========================================================================= */
+function speakText(text){
+  if(!appState.preferences.voice) return;
+  if(!('speechSynthesis' in window)){ showToast('Leitura em voz não é suportada neste navegador.'); return; }
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR';
+    u.rate = (appState.preferences.voiceRate || 100) / 100;
+    u.volume = (appState.preferences.volume ?? 60) / 100;
+    const voices = window.speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+    if(voices.length) u.voice = voices[0];
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* voz é um extra, nunca deve travar o app */ }
+}
+
+/* =========================================================================
+   NOTIFICAÇÕES — enquanto o app está aberto (sem push em segundo plano)
+   ========================================================================= */
+async function requestNotificationPermission(){
+  if(!('Notification' in window)) return 'unsupported';
+  if(Notification.permission === 'granted' || Notification.permission === 'denied') return Notification.permission;
+  try{ return await Notification.requestPermission(); }catch(e){ return 'denied'; }
+}
+function isQuietHoursNow(){
+  const { quietStart, quietEnd } = appState.notifications;
+  if(!quietStart || !quietEnd) return false;
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  const [sh,sm] = quietStart.split(':').map(Number), [eh,em] = quietEnd.split(':').map(Number);
+  const startMin = sh*60+sm, endMin = eh*60+em;
+  return startMin <= endMin ? (nowMin >= startMin && nowMin < endMin) : (nowMin >= startMin || nowMin < endMin);
+}
+function maybeNotify(title, body){
+  if(!appState.notifications.messages) return;
+  if(isQuietHoursNow()) return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  try{ new Notification(title, { body, icon:'icon.svg', tag:title }); }catch(e){ /* notificação é um extra, nunca crítica */ }
+}
+let notifyLoopTimer = null;
+const notifiedTodayRefs = new Set();
+function startNotificationLoop(){
+  clearInterval(notifyLoopTimer);
+  notifyLoopTimer = setInterval(() => {
+    if(todayKey() !== notifyLoopTimer._day){ notifiedTodayRefs.clear(); notifyLoopTimer._day = todayKey(); }
+    if(isQuietHoursNow()) return;
+    // água: lembrete gentil dentro da janela configurada, respeitando o intervalo
+    if(appState.notifications.water){
+      const { reminderStart, reminderEnd } = appState.hydration;
+      const now = new Date(); const nowMin = now.getHours()*60+now.getMinutes();
+      const [sh,sm] = (reminderStart||'08:00').split(':').map(Number), [eh,em] = (reminderEnd||'21:00').split(':').map(Number);
+      const inWindow = nowMin >= (sh*60+sm) && nowMin <= (eh*60+em);
+      const key = 'water:' + Math.floor(nowMin / (appState.hydration.reminderInterval || 60));
+      if(inWindow && getTodayWaterMl() < appState.hydration.goalMl && !notifiedTodayRefs.has(key)){
+        notifiedTodayRefs.add(key);
+        maybeNotify('Vero', 'Que tal alguns goles de água? 💧');
+      }
+    }
+    // alimentação: avisa gentilmente sobre a próxima refeição pendente, perto do horário
+    if(appState.notifications.food){
+      const next = getMealSlotsOrdered().find(s => !getMealLogToday(s.key));
+      if(next){
+        const [nh,nm] = next.time.split(':').map(Number);
+        const now = new Date(); const nowMin = now.getHours()*60+now.getMinutes();
+        const slotMin = nh*60+nm;
+        if(nowMin >= slotMin && nowMin <= slotMin + 15 && !notifiedTodayRefs.has('meal:'+next.key)){
+          notifiedTodayRefs.add('meal:'+next.key);
+          maybeNotify('Vero', 'Seu próximo momento da rotina está chegando: ' + next.title + '.');
+        }
+      }
+    }
+    // movimento: um lembrete leve à tarde, uma vez por dia
+    if(appState.notifications.movement){
+      const now = new Date(); const nowMin = now.getHours()*60+now.getMinutes();
+      if(nowMin >= 15*60 && nowMin <= 15*60+20 && getTodayMovementLogs().length === 0 && !notifiedTodayRefs.has('movement')){
+        notifiedTodayRefs.add('movement');
+        maybeNotify('Vero', 'Uma pequena pausa pode ser uma boa ideia. 🌿');
+      }
+    }
+  }, 60000);
+}
+
+function renderWaterCard(){
+  const ml = getTodayWaterMl();
+  const goal = appState.hydration.goalMl || 2000;
+  $('#waterAmountText').textContent = ml + ' / ' + goal + ' ml';
+  $('#waterBar').style.width = Math.min(100, Math.round((ml/goal)*100)) + '%';
+}
+function renderSummaryCards(){
+  const slots = getMealSlotsOrdered();
+  const doneSlots = slots.filter(s => getMealLogToday(s.key)).length;
+  $('#summaryMeals').textContent = doneSlots + ' de ' + slots.length;
+  $('#summaryWater').textContent = getTodayWaterMl() + ' / ' + (appState.hydration.goalMl||2000) + ' ml';
+  const moveCount = getTodayMovementLogs().length;
+  $('#summaryMovement').textContent = moveCount > 0 ? moveCount + ' registrada' + (moveCount>1?'s':'') : 'Ainda não registrado';
+}
+function renderToday(){
+  const info = getTodayInfo();
+  let msg = DAY_MESSAGES[info.type] || DAY_MESSAGES.trabalho;
+  if(info.special && info.title) msg = info.title + '. ' + msg;
+  $('#dayContextText').textContent = msg;
+
+  const missions = getTodayMissions();
+  const doneCount = missions.filter(m => m.completed).length;
+  const pct = missions.length ? Math.round((doneCount / missions.length) * 100) : 0;
+  $('#presenceRing').style.setProperty('--progress', pct);
+  $('#presenceValue').textContent = pct + '%';
+
+  const next = missions.find(m => !m.completed);
+  $('#nextMissionLabel').textContent = next ? 'Próximo passo' : 'Tudo certo por aqui';
+  $('#nextMissionText').textContent = next ? next.title : 'Nenhuma missão pendente agora.';
+
+  $('#missionList').innerHTML = missions.map(m => `
+    <div class="mission-row${m.completed ? ' done' : ''}" data-mission-id="${m.id}">
+      <button class="mission-row__check" aria-label="Marcar" aria-pressed="${m.completed}">
+        <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+      </button>
+      <span class="mission-row__title">${escapeHTML(m.title)}</span>
+      <span class="mission-row__time">${escapeHTML(m.time)}</span>
+    </div>
+  `).join('');
+  $$('#missionList .mission-row').forEach(row => {
+    const mission = missions.find(m => m.id === row.dataset.missionId);
+    row.addEventListener('click', () => handleMissionClick(mission));
+  });
+
+  renderWaterCard();
+  renderSummaryCards();
+  if($('#view-config').classList.contains('active')) renderCalendar();
+
+}
+
+/* =========================================================================
+   MÉTRICAS — IMC (indicador matemático, sem linguagem médica)
+   ========================================================================= */
+function latestWeight(){
+  if(!appState.weightHistory.length) return appState.profile.weightInitial || null;
+  return appState.weightHistory.slice().sort((a,b)=>b.date.localeCompare(a.date))[0].weight;
+}
+function renderIMC(){
+  const w = latestWeight();
+  const hCm = appState.profile.height;
+  if(!w || !hCm){ $('#imcValue').textContent = '—'; return; }
+  const hM = hCm / 100;
+  const imc = w / (hM * hM);
+  $('#imcValue').textContent = imc.toFixed(1);
+}
+
+/* =========================================================================
+   HISTÓRICO DE PESO
+   ========================================================================= */
+function renderWeightHistory(){
+  const list = appState.weightHistory.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  $('#weightHistoryList').innerHTML = list.length
+    ? list.map(w => `
+        <div class="special-date-item">
+          <div class="special-date-item__text">
+            <span class="special-date-item__type">${w.weight} kg</span>
+            <span class="special-date-item__date">${formatDateBR(w.date)}</span>
+            ${w.note ? `<span class="special-date-item__note">${escapeHTML(w.note)}</span>` : ''}
+          </div>
+          <button class="icon-btn-sm" data-delete-weight="${w.id}" aria-label="Remover registro de peso">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>`).join('')
+    : '<p style="color:var(--text-muted); font-size:var(--fs-sm); padding:var(--space-2) 0;">Nenhum registro de peso ainda.</p>';
+  $$('[data-delete-weight]').forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.deleteWeight;
+    appState.weightHistory = appState.weightHistory.filter(w => w.id !== id);
+    saveAppState(); renderWeightHistory(); renderIMC();
+    removeRemoteWeightEntry(id);
+    showToast('Removido.');
+  }));
+}
+
+/* =========================================================================
+   HISTÓRICO DE MEDIDAS
+   ========================================================================= */
+let editingMeasurementId = null;
+function renderMeasurementsHistory(){
+  const list = appState.measurementsHistory.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const fieldsLabel = (m) => [
+    m.waist ? `Cintura ${m.waist}cm` : null, m.hip ? `Quadril ${m.hip}cm` : null, m.bust ? `Busto ${m.bust}cm` : null
+  ].filter(Boolean).join(' · ') || 'Medição registrada';
+  $('#measurementsHistoryList').innerHTML = list.length
+    ? list.map(m => `
+        <div class="special-date-item special-date-item--editable" data-edit-measurement="${m.id}">
+          <div class="special-date-item__text">
+            <span class="special-date-item__type">${escapeHTML(fieldsLabel(m))}</span>
+            <span class="special-date-item__date">${formatDateBR(m.date)}</span>
+          </div>
+          <button class="icon-btn-sm" data-delete-measurement="${m.id}" aria-label="Remover medição">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>`).join('')
+    : '<p style="color:var(--text-muted); font-size:var(--fs-sm); padding:var(--space-2) 0;">Nenhuma medição registrada ainda.</p>';
+  $$('[data-edit-measurement]').forEach(row => row.addEventListener('click', (e) => {
+    if(e.target.closest('[data-delete-measurement]')) return;
+    const m = appState.measurementsHistory.find(x => x.id === row.dataset.editMeasurement);
+    if(!m) return;
+    editingMeasurementId = m.id;
+    $('#measDate').value = m.date; $('#measWaist').value = m.waist ?? ''; $('#measHip').value = m.hip ?? '';
+    $('#measBust').value = m.bust ?? ''; $('#measArmRight').value = m.armRight ?? ''; $('#measArmLeft').value = m.armLeft ?? '';
+    $('#measThighRight').value = m.thighRight ?? ''; $('#measThighLeft').value = m.thighLeft ?? '';
+    $('#measCalfRight').value = m.calfRight ?? ''; $('#measCalfLeft').value = m.calfLeft ?? ''; $('#measNote').value = m.note || '';
+    $('#btnAddMeasurement').textContent = 'Salvar alterações';
+    $('#btnCancelMeasurementEdit').hidden = false;
+  }));
+  $$('[data-delete-measurement]').forEach(btn => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const id = btn.dataset.deleteMeasurement;
+    appState.measurementsHistory = appState.measurementsHistory.filter(m => m.id !== id);
+    saveAppState(); renderMeasurementsHistory();
+    removeRemoteMeasurement(id);
+    showToast('Removido.');
+  }));
+}
+
+/* =========================================================================
+   CALENDÁRIO
+   ========================================================================= */
+let calendarViewDate = new Date();
+function renderCalendar(){
+  const grid = $('#calendarGrid');
+  if(!grid) return;
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  $('#calMonthLabel').textContent = calendarViewDate.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const dowLabels = ['D','S','T','Q','Q','S','S'];
+  let html = '<div class="calendar-grid">';
+  dowLabels.forEach(l => html += `<div class="calendar-grid__dow">${l}</div>`);
+  for(let i=0;i<firstDow;i++) html += '<div class="calendar-day calendar-day--empty"></div>';
+  const todayStr = todayKey();
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const info = getDateInfo(dateStr);
+    let cls = 'calendar-day';
+    if(info.special) cls += ' calendar-day--special';
+    else if(info.type === 'folga' || info.type === 'indisponivel') cls += ' calendar-day--folga';
+    if(dateStr === todayStr) cls += ' calendar-day--today';
+    html += `<button class="${cls}" data-cal-date="${dateStr}" aria-label="${d}">${d}</button>`;
+  }
+  html += '</div>';
+  grid.innerHTML = html;
+  $$('[data-cal-date]', grid).forEach(cell => cell.addEventListener('click', () => openDaySummary(cell.dataset.calDate)));
+}
+function openDaySummary(dateStr){
+  const info = getDateInfo(dateStr);
+  const label = SPECIAL_TYPE_LABELS[info.type] || (info.type === 'trabalho' ? 'Trabalho' : 'Folga');
+  setModal(formatDateBR(dateStr), `
+    <p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">${escapeHTML(label)}${info.title ? ' — ' + escapeHTML(info.title) : ''}${info.note ? '<br>' + escapeHTML(info.note) : ''}</p>
+  `, `
+    <button class="btn btn--primary btn--block" id="btnAddExceptionForDay">Adicionar exceção para este dia</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+  `);
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $('#btnAddExceptionForDay').addEventListener('click', () => renderSpecialDatesModal(dateStr));
+}
+
+function populateConfigForm(){
+  $('#cfgProfileName').value = appState.profile.name || '';
+  $('#cfgProfileNickname').value = appState.profile.nickname || '';
+  $('#cfgProfileBirth').value = appState.profile.birth || '';
+  $('#cfgProfileSex').value = appState.profile.sex || 'Feminino';
+  $('#cfgProfileHeight').value = appState.profile.height ?? '';
+  $('#cfgProfileWeightInitial').value = appState.profile.weightInitial ?? '';
+  $('#cfgProfileNote').value = appState.profile.note || '';
+
+  $('#cfgGoalMain').value = appState.goals.main || '';
+  $('#cfgGoalWeight').value = appState.goals.weightGoal ?? '';
+  $('#cfgGoalWaist').value = appState.goals.waistGoal ?? '';
+  $('#cfgGoalHydration').value = appState.goals.hydrationGoal ?? '';
+  $('#cfgGoalMovement').value = appState.goals.movementGoal ?? '';
+  $('#cfgGoalCustom').value = appState.goals.custom || '';
+
+  $('#cfgWake').value = appState.routine.wake;
+  $('#cfgSleep').value = appState.routine.sleep;
+  $('#cfgWorkStart').value = appState.routine.workStart;
+  $('#cfgWorkEnd').value = appState.routine.workEnd;
+  $('#cfgLeaveHome').value = appState.routine.leaveHome;
+  $('#cfgCommuteMinutes').value = appState.routine.commuteMinutes;
+  $('#cfgReturnHome').value = appState.routine.returnHome;
+  $$('#cfgWeeklySchedule select[data-day]').forEach(sel => { sel.value = appState.routine.weeklySchedule[sel.dataset.day] || 'trabalho'; });
+
+  $$('.toggle[data-notif]').forEach(t => t.setAttribute('aria-pressed', String(!!appState.notifications[t.dataset.notif])));
+  $('#toggleAudio').setAttribute('aria-pressed', String(!!appState.preferences.audio));
+  $('#toggleVoice').setAttribute('aria-pressed', String(!!appState.preferences.voice));
+  $('#cfgVolume').value = appState.preferences.volume;
+  $('#cfgVoiceRate').value = appState.preferences.voiceRate;
+  $('#cfgQuietStart').value = appState.notifications.quietStart;
+  $('#cfgQuietEnd').value = appState.notifications.quietEnd;
+  if('Notification' in window) $('#notifPermHint').textContent = Notification.permission === 'granted' ? 'Ativadas neste navegador' : 'Toque para permitir no navegador';
+  else $('#notifPermHint').textContent = 'Não suportadas neste navegador';
+
+  $('#cfgWaterGoal').value = appState.hydration.goalMl;
+  $('#cfgBottleMl').value = appState.hydration.bottleMl;
+  $('#cfgCupMl').value = appState.hydration.cupMl;
+  $('#cfgReminderStart').value = appState.hydration.reminderStart;
+  $('#cfgReminderEnd').value = appState.hydration.reminderEnd;
+  $('#cfgReminderInterval').value = appState.hydration.reminderInterval;
+  $('#toggleWaterQuiet').setAttribute('aria-pressed', String(!!appState.hydration.quiet));
+
+  $('#cfgCocaGoal').value = appState.nutrition.cocaZeroGoal;
+  $('#cfgWheyQty').value = appState.nutrition.wheyPlannedQty;
+  $('#cfgWheyTime').value = appState.nutrition.wheyPreferredTime;
+
+  renderIMC();
+  renderWeightHistory();
+  renderMeasurementsHistory();
+  renderCalendar();
+  renderMealPlanEditor();
+  renderMovementConfigList();
+  renderGamificationBadges();
+}
+
+/* =========================================================================
+   ALIMENTAÇÃO — modais de refeição
+   ========================================================================= */
+const MEAL_STATUS_LABELS = { completed:'Concluí', skipped:'Pulei', substituted:'Substituí', ateOut:'Comi fora', notHungry:'Não estava com fome' };
+function logMealStatus(slotKey, status, optionLabel){
+  addLogEntry('meal', slotKey, status, null, optionLabel || '', todayKey());
+  closeModal();
+  renderToday();
+  if($('#view-alimentacao').classList.contains('active')) renderAlimentacaoView();
+  showToast('Feito é melhor que perfeito. ✨');
+}
+function openMealModal(slotKey){
+  const slot = appState.nutrition.mealPlan[slotKey];
+  let selectedOption = null;
+  const optionsHTML = (slot.options && slot.options.length)
+    ? `<div class="chip-group" id="mealOptionChips" style="margin-bottom:var(--space-4);">` +
+        slot.options.map(o => `<button class="chip" data-option-id="${o.id}" title="${escapeHTML(o.note||'')}">${escapeHTML(o.label)}</button>`).join('') +
+      `</div>`
+    : (slot.info ? `<p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">${escapeHTML(slot.info)}</p>` : '');
+
+  setModal(slot.title + ' · ' + slot.time, optionsHTML, `
+    <button class="btn btn--primary btn--block" data-meal-status="completed">Concluí</button>
+    <button class="btn btn--ghost btn--block" data-meal-status="substituted">Substituí</button>
+    <button class="btn btn--ghost btn--block" data-meal-status="ateOut">Comi fora</button>
+    <button class="btn btn--ghost btn--block" data-meal-status="skipped">Pulei</button>
+    ${slot.optional ? '<button class="btn btn--ghost btn--block" data-meal-status="notHungry">Não estava com fome</button>' : ''}
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+  `);
+  $$('#mealOptionChips .chip').forEach(chip => chip.addEventListener('click', () => {
+    selectedOption = chip.textContent;
+    $$('#mealOptionChips .chip').forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
+  }));
+  $$('[data-meal-status]').forEach(btn => btn.addEventListener('click', () => logMealStatus(slotKey, btn.dataset.mealStatus, selectedOption)));
+  $('#btnCloseModal').addEventListener('click', closeModal);
+}
+function openArrivalHomeModal(){
+  const slot = appState.nutrition.mealPlan.arrivalHome;
+  setModal(slot.title, `<p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">Se não houver fome, também está tudo bem.</p>`, `
+    <button class="btn btn--primary btn--block" id="btnArrivalHungry">Estou com fome</button>
+    <button class="btn btn--ghost btn--block" id="btnArrivalFine">Estou bem por enquanto</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+  `);
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $('#btnArrivalFine').addEventListener('click', () => logMealStatus('arrivalHome', 'notHungry', ''));
+  $('#btnArrivalHungry').addEventListener('click', () => {
+    setModal(slot.title, `<div class="chip-group">${slot.options.map(o => `<button class="chip" data-option-label="${escapeHTML(o.label)}">${escapeHTML(o.label)}</button>`).join('')}</div>`, `
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $$('[data-option-label]').forEach(btn => btn.addEventListener('click', () => logMealStatus('arrivalHome', 'completed', btn.dataset.optionLabel)));
+  });
+}
+function showNightHungerOptions(){
+  setModal('Fome noturna', `<p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">Não tem problema sentir fome. Vamos escolher algo que faça sentido para você.</p><div class="chip-group">${['Fruta','Iogurte natural','Copo de leite'].map(l => `<button class="chip" data-option-label="${l}">${l}</button>`).join('')}</div>`, `<button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>`);
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $$('[data-option-label]').forEach(btn => btn.addEventListener('click', () => logMealStatus('nightHunger', 'completed', btn.dataset.optionLabel)));
+}
+function openNightHungerModal(){
+  setModal('Fome noturna', `<p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">É fome ou vontade de comer?</p>`, `
+    <button class="btn btn--primary btn--block" id="btnNightHungry">Estou com fome</button>
+    <button class="btn btn--ghost btn--block" id="btnNightCraving">É mais vontade de comer</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+  `);
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $('#btnNightHungry').addEventListener('click', showNightHungerOptions);
+  $('#btnNightCraving').addEventListener('click', () => {
+    setModal('Fome noturna', `<p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">Sem pressa. Você pode esperar alguns minutos, tomar água, escovar os dentes ou sair da cozinha. Se depois continuar com fome, tudo bem comer algo planejado.</p>`, `
+      <button class="btn btn--ghost btn--block" id="btnStillHungryAfter">Continuo com fome</button>
+      <button class="btn btn--primary btn--block" id="btnCloseModal">Fechar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#btnStillHungryAfter').addEventListener('click', showNightHungerOptions);
+  });
+}
+
+/* =========================================================================
+   ÁGUA — registro rápido
+   ========================================================================= */
+function addWater(ml){
+  addLogEntry('hydration', 'water', null, ml, '', todayKey());
+  renderWaterCard();
+  renderToday();
+  showToast('Salvo ✨');
+}
+function openWaterCustomModal(){
+  setModal('Quantidade de água', `<div class="field"><label>Mililitros</label><input type="number" id="waterCustomMl" placeholder="ex: 300"></div>`, `
+    <button class="btn btn--primary btn--block" id="btnConfirmWaterCustom">Adicionar</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+  `);
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $('#btnConfirmWaterCustom').addEventListener('click', () => {
+    const ml = Number($('#waterCustomMl').value);
+    if(!ml || ml <= 0){ showToast('Confira esse valor antes de salvar.'); return; }
+    closeModal();
+    addWater(ml);
+  });
+}
+
+/* =========================================================================
+   ALIMENTAÇÃO — view completa (refeições, coca zero, whey, hábitos, compras)
+   ========================================================================= */
+function renderAlimentacaoView(){
+  const slots = getMealSlotsOrdered();
+  $('#mealSlotsList').innerHTML = slots.map(slot => {
+    const log = getMealLogToday(slot.key);
+    const statusText = log ? (MEAL_STATUS_LABELS[log.status] || 'Registrado') : 'Pendente';
+    return `
+      <div class="mission-row${log ? ' done' : ''}" data-slot-key="${slot.key}">
+        <button class="mission-row__check" aria-label="Abrir refeição" aria-pressed="${!!log}">
+          <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+        <span class="mission-row__title">${escapeHTML(slot.title)}${log && log.note ? ' — ' + escapeHTML(log.note) : ''}</span>
+        <span class="mission-row__time">${slot.time} · ${statusText}</span>
+      </div>`;
+  }).join('');
+  $$('#mealSlotsList .mission-row').forEach(row => row.addEventListener('click', () => {
+    const key = row.dataset.slotKey;
+    if(key === 'nightHunger') openNightHungerModal();
+    else if(key === 'arrivalHome') openArrivalHomeModal();
+    else openMealModal(key);
+  }));
+
+  const cocaMl = getTodayCocaMl();
+  $('#cocaZeroText').textContent = cocaMl + ' / ' + appState.nutrition.cocaZeroGoal + ' ml';
+  $('#wheyText').textContent = appState.nutrition.wheyPlannedQty + ' scoop · ' + appState.nutrition.wheyPreferredTime;
+  $('#btnWheyToday').textContent = isWheyDoneToday() ? 'Consumido ✓ (tocar para desfazer)' : 'Consumido hoje';
+
+  renderShoppingList();
+}
+function renderShoppingList(){
+  const list = appState.nutrition.shoppingList;
+  const categories = [...new Set(list.map(i => i.category))];
+  $('#shoppingListContainer').innerHTML = categories.map(cat => `
+    <h3 class="section-title">${escapeHTML(cat)}</h3>
+    ${list.filter(i => i.category === cat).map(item => `
+      <div class="config-item" data-shopping-id="${item.id}">
+        <div class="config-item__text"><span class="config-item__label" style="${item.checked ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${escapeHTML(item.name)}</span></div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="toggle" data-toggle-shopping="${item.id}" aria-pressed="${item.checked}"></button>
+          ${item.custom ? `<button class="icon-btn-sm" data-delete-shopping="${item.id}" aria-label="Remover item"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+  $$('[data-toggle-shopping]').forEach(btn => btn.addEventListener('click', () => {
+    const item = appState.nutrition.shoppingList.find(i => i.id === btn.dataset.toggleShopping);
+    item.checked = !item.checked;
+    saveAppState(); renderShoppingList(); pushModuleSettings();
+  }));
+  $$('[data-delete-shopping]').forEach(btn => btn.addEventListener('click', () => {
+    appState.nutrition.shoppingList = appState.nutrition.shoppingList.filter(i => i.id !== btn.dataset.deleteShopping);
+    saveAppState(); renderShoppingList(); pushModuleSettings();
+  }));
+}
+
+/* =========================================================================
+   MOVIMENTO — view e configuração
+   ========================================================================= */
+function renderMovementView(){
+  $('#movementList').innerHTML = appState.movement.activities.map(a => {
+    const done = isMovementDoneToday(a.id);
+    return `
+      <div class="mission-row${done ? ' done' : ''}" data-activity-id="${a.id}">
+        <button class="mission-row__check" aria-label="Concluído hoje" aria-pressed="${done}">
+          <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+        <span class="mission-row__title">${escapeHTML(a.name)}</span>
+        <span class="mission-row__time">${done ? 'Feito' : ''}</span>
+      </div>`;
+  }).join('');
+  $$('#movementList .mission-row').forEach(row => row.addEventListener('click', () => {
+    const id = row.dataset.activityId;
+    if(isMovementDoneToday(id)){
+      const log = logsForDate(todayKey(),'movement').find(l => l.ref === id);
+      if(log) removeLogEntry(log.id);
+      showToast('Sem problema, desfeito.');
+    } else {
+      addLogEntry('movement', id, 'completed', null, '', todayKey());
+      showToast('Registrado. Um passo de cada vez. 🌿');
+    }
+    renderMovementView(); renderToday();
+  }));
+}
+function renderMovementConfigList(){
+  $('#movementConfigList').innerHTML = appState.movement.activities.map(a => `
+    <div class="config-item" data-activity-config-id="${a.id}">
+      <div class="config-item__text"><span class="config-item__label">${escapeHTML(a.name)}</span><span class="config-item__hint">${escapeHTML(a.description||'')}</span></div>
+      <button class="icon-btn-sm" data-delete-activity="${a.id}" aria-label="Remover atividade"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  `).join('');
+  $$('[data-delete-activity]').forEach(btn => btn.addEventListener('click', () => {
+    appState.movement.activities = appState.movement.activities.filter(a => a.id !== btn.dataset.deleteActivity);
+    saveAppState(); renderMovementConfigList(); pushModuleSettings();
+    if($('#view-movimento').classList.contains('active')) renderMovementView();
+  }));
+}
+
+/* =========================================================================
+   ALIMENTAÇÃO — editor de refeições (Configurações)
+   ========================================================================= */
+function renderMealPlanEditor(){
+  const plan = appState.nutrition.mealPlan;
+  $('#mealPlanEditor').innerHTML = Object.entries(plan).map(([key, slot]) => `
+    <div class="accordion" data-meal-editor="${key}" style="margin-bottom:var(--space-2);">
+      <button class="accordion__head">
+        <span class="accordion__head-left"><span class="accordion__title">${escapeHTML(slot.title)}</span></span>
+        <svg class="accordion__chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="accordion__body"><div class="accordion__body-inner">
+        <div class="field"><label>Horário</label><input type="time" data-slot-time="${key}" value="${slot.time}"></div>
+        <div class="config-item"><div class="config-item__text"><span class="config-item__label">Ativa</span></div><button class="toggle" data-slot-enabled="${key}" aria-pressed="${slot.enabled}"></button></div>
+        ${slot.options ? `
+          <div id="optionsList-${key}">${slot.options.map(o => `
+            <div class="config-item" data-option-row="${key}:${o.id}">
+              <div class="config-item__text"><span class="config-item__label">${escapeHTML(o.label)}</span></div>
+              <button class="icon-btn-sm" data-delete-option="${key}:${o.id}" aria-label="Remover opção"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>`).join('')}</div>
+          <div class="field"><label>Nova opção</label><input type="text" data-new-option="${key}" placeholder="ex: panqueca de banana"></div>
+          <button class="btn btn--ghost btn--block" data-add-option="${key}" style="min-height:40px;">Adicionar opção</button>
+        ` : ''}
+      </div></div>
+    </div>
+  `).join('');
+
+  $$('#mealPlanEditor [data-meal-editor] .accordion__head').forEach(head => head.addEventListener('click', () => head.closest('.accordion').classList.toggle('open')));
+  $$('[data-slot-time]').forEach(inp => inp.addEventListener('change', () => { plan[inp.dataset.slotTime].time = inp.value; }));
+  $$('[data-slot-enabled]').forEach(btn => btn.addEventListener('click', () => {
+    const key = btn.dataset.slotEnabled;
+    plan[key].enabled = !plan[key].enabled;
+    btn.setAttribute('aria-pressed', String(plan[key].enabled));
+  }));
+  $$('[data-add-option]').forEach(btn => btn.addEventListener('click', () => {
+    const key = btn.dataset.addOption;
+    const input = $('[data-new-option="'+key+'"]');
+    const label = input.value.trim();
+    if(!label) return;
+    plan[key].options.push({ id:genId('opt'), label, note:'' });
+    input.value = '';
+    renderMealPlanEditor();
+  }));
+  $$('[data-delete-option]').forEach(btn => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const [key, optId] = btn.dataset.deleteOption.split(':');
+    plan[key].options = plan[key].options.filter(o => o.id !== optId);
+    renderMealPlanEditor();
+  }));
+}
+
+/* =========================================================================
+   EVOLUÇÃO
+   ========================================================================= */
+let evoPeriodDays = 7;
+function filterByPeriod(items, dateField){
+  if(evoPeriodDays === 'all') return items;
+  const cutoff = todayKeyMinusDays(evoPeriodDays);
+  return items.filter(i => i[dateField] >= cutoff);
+}
+function buildWeightSparkline(data){
+  if(data.length < 2) return '';
+  const w = 280, h = 80, pad = 8;
+  const sorted = data.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const values = sorted.map(d=>d.weight);
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = (max - min) || 1;
+  const pts = sorted.map((d,i) => {
+    const x = pad + (i/(sorted.length-1)) * (w - pad*2);
+    const y = h - pad - ((d.weight - min)/range) * (h - pad*2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:80px;"><polyline points="${pts}" fill="none" stroke="var(--accent-2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function renderEvolucao(){
+  const wInitial = appState.profile.weightInitial;
+  const wCurrent = latestWeight();
+  const wGoal = appState.goals.weightGoal;
+  $('#evoWeightInitial').textContent = wInitial ? wInitial + ' kg' : '—';
+  $('#evoWeightCurrent').textContent = wCurrent ? wCurrent + ' kg' : '—';
+  $('#evoWeightGoal').textContent = wGoal ? wGoal + ' kg' : '—';
+  $('#evoWeightDistance').textContent = (wCurrent && wGoal) ? Math.abs(wCurrent - wGoal).toFixed(1) + ' kg de diferença' : '—';
+
+  const weightData = filterByPeriod(appState.weightHistory, 'date');
+  $('#evoChartCard').innerHTML = weightData.length >= 2
+    ? buildWeightSparkline(weightData)
+    : '<p style="color:var(--text-muted); font-size:var(--fs-sm); text-align:center; padding:var(--space-4) 0;">Ainda estamos começando. Seus primeiros registros vão aparecer aqui.</p>';
+
+  const measurements = appState.measurementsHistory.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(measurements.length >= 2){
+    const [curr, prev] = measurements;
+    const fields = [['waist','Cintura'],['hip','Quadril'],['bust','Busto'],['armRight','Braço direito'],['armLeft','Braço esquerdo'],['thighRight','Coxa direita'],['thighLeft','Coxa esquerda'],['calfRight','Panturrilha direita'],['calfLeft','Panturrilha esquerda']];
+    $('#evoMeasurementsCard').innerHTML = fields.filter(([k]) => curr[k] != null && prev[k] != null).map(([k,label]) => {
+      const diff = (curr[k]-prev[k]);
+      const sign = diff > 0 ? '+' : '';
+      return `<div class="config-item"><div class="config-item__text"><span class="config-item__label">${label}</span><span class="config-item__hint">Anterior: ${prev[k]}cm · Atual: ${curr[k]}cm</span></div><span style="font-weight:700; color:var(--accent-2);">${sign}${diff.toFixed(1)}cm</span></div>`;
+    }).join('') || '<p style="color:var(--text-muted); font-size:var(--fs-sm);">Ainda não temos dados suficientes para comparar.</p>';
+  } else {
+    $('#evoMeasurementsCard').innerHTML = '<p style="color:var(--text-muted); font-size:var(--fs-sm);">Ainda não temos dados suficientes para comparar.</p>';
+  }
+
+  const periodLogs = filterByPeriod(appState.logs, 'date');
+  const waterLogs = periodLogs.filter(l => l.category === 'hydration');
+  const daysWithWater = [...new Set(waterLogs.map(l => l.date))];
+  const waterAvg = daysWithWater.length ? Math.round(sumAmount(waterLogs) / daysWithWater.length) : null;
+  $('#evoWaterAvg').textContent = waterAvg ? waterAvg + ' ml' : '—';
+  $('#evoMealsCount').textContent = periodLogs.filter(l => l.category === 'meal').length || '—';
+  $('#evoMovementCount').textContent = periodLogs.filter(l => l.category === 'movement').length || '—';
+  $('#evoActiveDays').textContent = [...new Set(periodLogs.map(l => l.date))].length || '—';
+}
+
+/* =========================================================================
+   DATAS ESPECIAIS — modal funcional
+   ========================================================================= */
+let editingSpecialDateId = null;
+function renderSpecialDatesModal(prefillDate){
+  const listHTML = appState.specialDates.length
+    ? appState.specialDates.slice().sort((a,b)=>a.dateStart.localeCompare(b.dateStart)).map(sd => `
+        <div class="special-date-item special-date-item--editable" data-edit-special="${sd.id}">
+          <div class="special-date-item__text">
+            <span class="special-date-item__type">${escapeHTML(sd.title || SPECIAL_TYPE_LABELS[sd.type] || sd.type)}</span>
+            <span class="special-date-item__date">${formatDateBR(sd.dateStart)}${sd.dateEnd && sd.dateEnd !== sd.dateStart ? ' → ' + formatDateBR(sd.dateEnd) : ''}</span>
+            ${sd.note ? `<span class="special-date-item__note">${escapeHTML(sd.note)}</span>` : ''}
+          </div>
+          <button class="icon-btn-sm" data-delete-special="${sd.id}" aria-label="Remover data especial">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>`).join('')
+    : '<p style="color:var(--text-muted); font-size:var(--fs-sm); padding:var(--space-3) 0;">Nenhuma data especial cadastrada ainda.</p>';
+
+  editingSpecialDateId = null;
+  setModal('Datas especiais', `
+    <div class="field"><label>Título (opcional)</label><input type="text" id="newSpecialTitle" placeholder="ex: Viagem em família"></div>
+    <div class="field"><label>Data inicial</label><input type="date" id="newSpecialDateStart" value="${prefillDate || ''}"></div>
+    <div class="field"><label>Data final (opcional, para períodos)</label><input type="date" id="newSpecialDateEnd"></div>
+    <div class="field"><label>Tipo</label>
+      <select id="newSpecialType">
+        <option value="folga">Folga</option>
+        <option value="feriado">Feriado</option>
+        <option value="ferias">Férias</option>
+        <option value="recesso">Recesso</option>
+        <option value="ausencia">Ausência</option>
+        <option value="trabalho_excepcional">Trabalho excepcional</option>
+        <option value="consulta_compromisso">Consulta/Compromisso</option>
+        <option value="horario_personalizado">Horário personalizado</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+    <div id="customScheduleFields" hidden>
+      <div class="field"><label>Início (personalizado)</label><input type="time" id="newSpecialCustomStart"></div>
+      <div class="field"><label>Término (personalizado)</label><input type="time" id="newSpecialCustomEnd"></div>
+      <div class="field"><label>Saída de casa (personalizado)</label><input type="time" id="newSpecialCustomLeave"></div>
+      <div class="field"><label>Retorno (personalizado)</label><input type="time" id="newSpecialCustomReturn"></div>
+    </div>
+    <div class="field"><label>Observação (opcional)</label><input type="text" id="newSpecialNote" placeholder="algo que queira lembrar"></div>
+    <div style="max-height:220px; overflow-y:auto;">${listHTML}</div>
+  `, `
+    <button class="btn btn--primary btn--block" id="btnAddSpecialDate">Adicionar</button>
+    <button class="btn btn--ghost btn--block" id="btnCancelSpecialEdit" hidden>Cancelar edição</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+  `);
+
+  $('#newSpecialType').addEventListener('change', (e) => {
+    $('#customScheduleFields').hidden = e.target.value !== 'horario_personalizado';
+  });
+
+  function readForm(){
+    const dateStart = $('#newSpecialDateStart').value;
+    const dateEnd = $('#newSpecialDateEnd').value || dateStart;
+    if(!dateStart){ showToast('Escolha uma data inicial.'); return null; }
+    if(dateEnd < dateStart){ showToast('Confira essas datas antes de salvar.'); return null; }
+    return {
+      title: $('#newSpecialTitle').value.trim(), dateStart, dateEnd, type: $('#newSpecialType').value,
+      note: $('#newSpecialNote').value.trim(), customStart: $('#newSpecialCustomStart').value,
+      customEnd: $('#newSpecialCustomEnd').value, customLeave: $('#newSpecialCustomLeave').value,
+      customReturn: $('#newSpecialCustomReturn').value
+    };
+  }
+
+  $('#btnAddSpecialDate').addEventListener('click', () => {
+    const form = readForm();
+    if(!form) return;
+    let entry;
+    if(editingSpecialDateId){
+      entry = appState.specialDates.find(s => s.id === editingSpecialDateId);
+      Object.assign(entry, form);
+    } else {
+      entry = { id:genUUID(), ...form };
+      appState.specialDates.push(entry);
+    }
+    saveAppState();
+    renderToday();
+    renderSpecialDatesModal();
+    pushSpecialDate(entry);
+    showToast('Salvo ✨');
+  });
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $('#btnCancelSpecialEdit').addEventListener('click', () => renderSpecialDatesModal());
+
+  $$('[data-edit-special]').forEach(row => row.addEventListener('click', (e) => {
+    if(e.target.closest('[data-delete-special]')) return;
+    const sd = appState.specialDates.find(s => s.id === row.dataset.editSpecial);
+    if(!sd) return;
+    editingSpecialDateId = sd.id;
+    $('#newSpecialTitle').value = sd.title || ''; $('#newSpecialDateStart').value = sd.dateStart;
+    $('#newSpecialDateEnd').value = sd.dateEnd && sd.dateEnd !== sd.dateStart ? sd.dateEnd : '';
+    $('#newSpecialType').value = sd.type; $('#newSpecialNote').value = sd.note || '';
+    $('#newSpecialCustomStart').value = sd.customStart || ''; $('#newSpecialCustomEnd').value = sd.customEnd || '';
+    $('#newSpecialCustomLeave').value = sd.customLeave || ''; $('#newSpecialCustomReturn').value = sd.customReturn || '';
+    $('#customScheduleFields').hidden = sd.type !== 'horario_personalizado';
+    $('#btnAddSpecialDate').textContent = 'Salvar alterações';
+    $('#btnCancelSpecialEdit').hidden = false;
+  }));
+  $$('[data-delete-special]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.deleteSpecial;
+      appState.specialDates = appState.specialDates.filter(s => s.id !== id);
+      saveAppState();
+      renderToday();
+      renderSpecialDatesModal();
+      removeRemoteSpecialDate(id);
+      showToast('Removido.');
+    });
+  });
+}
+
+/* =========================================================================
+   "HOJE NÃO TRABALHO"
+   ========================================================================= */
+function openTodayOffConfirm(){
+  const info = getTodayInfo();
+  if(info.type !== 'trabalho'){
+    showToast('Hoje já não é um dia de trabalho.');
+    return;
+  }
+  setModal('Hoje não trabalho', `
+    <p style="color:var(--text-muted); font-size:var(--fs-sm);">Vamos marcar somente a data de hoje como folga. O restante da sua rotina continua igual.</p>
+  `, `
+    <button class="btn btn--primary btn--block" id="btnConfirmTodayOff">Confirmar</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+  `);
+  $('#btnConfirmTodayOff').addEventListener('click', () => {
+    const key = todayKey();
+    const entry = { id:genUUID(), title:'', dateStart:key, dateEnd:key, type:'folga', note:'Registrado via "Hoje não trabalho"', customStart:'', customEnd:'', customLeave:'', customReturn:'' };
+    appState.specialDates.push(entry);
+    saveAppState();
+    closeModal();
+    renderToday();
+    pushSpecialDate(entry);
+    showToast('Registrado. Aproveite seu dia. 🌿');
+  });
+  $('#btnCloseModal').addEventListener('click', closeModal);
+}
+
+
+/* =========================================================================
+   REDEFINIR APLICATIVO (dupla confirmação)
+   ========================================================================= */
+function openResetConfirm(){
+  setModal('Redefinir aplicativo', `
+    <p style="color:var(--text-muted); font-size:var(--fs-sm);">Isso vai apagar perfil, rotina, missões, datas especiais e preferências salvas neste dispositivo. Essa ação não pode ser desfeita.</p>
+  `, `
+    <button class="btn btn--danger btn--block" id="btnResetStep2">Continuar</button>
+    <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+  `);
+  $('#btnCloseModal').addEventListener('click', closeModal);
+  $('#btnResetStep2').addEventListener('click', () => {
+    setModal('Tem certeza?', `
+      <p style="color:var(--text-muted); font-size:var(--fs-sm);">Última confirmação: os dados locais serão apagados definitivamente.</p>
+    `, `
+      <button class="btn btn--danger btn--block" id="btnResetStep3">Apagar tudo</button>
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#btnResetStep3').addEventListener('click', resetAppState);
+  });
+}
+
+async function deleteAllUserData(){
+  if(!supabaseClient || authState.status !== 'authenticated'){ showToast('Não foi possível apagar agora. Tente novamente com internet.'); return; }
+  if(!navigator.onLine){ showToast('Sem conexão agora. Tente novamente quando estiver online.'); return; }
+  const userId = authState.user.id;
+  const tables = ['activity_logs','special_dates','profile_measurements','weight_history','module_settings','routines','app_state','app_settings','profiles'];
+  try{
+    for(const table of tables){
+      const { error } = await supabaseClient.from(table).delete().eq('user_id', userId);
+      if(error) console.error('Falha ao apagar '+table+':', error);
+    }
+    showToast('Seus dados foram apagados.');
+    await supabaseClient.auth.signOut();
+  }catch(e){
+    console.error('Falha ao apagar dados:', e);
+    showToast('Não conseguimos apagar tudo agora. Seus dados locais continuam salvos.');
+  }
+}
+
+/* =========================================================================
+   ONBOARDING (primeira execução)
+   ========================================================================= */
+let obStep = 1;
+function goToObStep(n){
+  $$('.onboarding__step').forEach(s => s.classList.toggle('active', Number(s.dataset.step) === n));
+  obStep = n;
+}
+function finishOnboarding(){
+  appState.profile.name = $('#obName').value.trim() || 'Viajante';
+  appState.profile.height = $('#obHeight').value ? Number($('#obHeight').value) : null;
+  appState.profile.weightInitial = $('#obWeight').value ? Number($('#obWeight').value) : appState.profile.weightInitial;
+  appState.goals.main = $('#obGoal').value.trim();
+  appState.routine.wake = $('#obWake').value || appState.routine.wake;
+  appState.routine.sleep = $('#obSleep').value || appState.routine.sleep;
+  appState.routine.workStart = $('#obWorkStart').value || appState.routine.workStart;
+  appState.routine.workEnd = $('#obWorkEnd').value || appState.routine.workEnd;
+  $$('#obWorkDays .chip').forEach(c => { appState.routine.weeklySchedule[c.dataset.day] = c.getAttribute('aria-pressed') === 'true' ? 'trabalho' : 'folga'; });
+  if(appState.profile.weightInitial){
+    appState.weightHistory.push({ id:genUUID(), weight:appState.profile.weightInitial, date:todayKey(), note:'Peso inicial' });
+  }
+  appState.meta.onboarded = true;
+  saveAppState();
+  $('#onboardingRoot').hidden = true;
+  renderGreeting();
+  renderToday();
+  populateConfigForm();
+  pushProfile();
+  pushRoutine();
+  pushState();
+  if(appState.weightHistory.length) pushWeightEntry(appState.weightHistory[appState.weightHistory.length-1]);
+  showToast('Tudo pronto ✨');
+}
+
+/* =========================================================================
+   EVENTOS
+   ========================================================================= */
+function bindEvents(){
+  // navegação
+  $$('.nav-btn').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
+  $('#btnSettingsHeader').addEventListener('click', () => switchView('config'));
+
+  // accordions
+  $$('[data-acc]').forEach(acc => {
+    $('.accordion__head', acc).addEventListener('click', () => acc.classList.toggle('open'));
+  });
+
+  // aparência: tema / modo / fonte / animações
+  $$('#themeGrid .theme-swatch').forEach(btn => btn.addEventListener('click', () => { applyTheme(btn.dataset.themeChoice); saveAppState(); pushSettings(); showToast('Tema atualizado'); }));
+  $$('#modeGroup .chip').forEach(btn => btn.addEventListener('click', () => { applyMode(btn.dataset.modeChoice); saveAppState(); pushSettings(); }));
+  $$('#fontGroup .chip').forEach(btn => btn.addEventListener('click', () => { applyFont(parseFloat(btn.dataset.fontChoice)); saveAppState(); pushSettings(); }));
+  $$('#animGroup .chip').forEach(btn => btn.addEventListener('click', () => { applyAnim(btn.dataset.animChoice); saveAppState(); pushSettings(); }));
+
+  // áudio
+  $('#toggleAudio').addEventListener('click', () => {
+    appState.preferences.audio = !appState.preferences.audio;
+    $('#toggleAudio').setAttribute('aria-pressed', String(appState.preferences.audio));
+    saveAppState();
+    pushSettings();
+  });
+  $('#toggleVoice').addEventListener('click', () => {
+    appState.preferences.voice = !appState.preferences.voice;
+    $('#toggleVoice').setAttribute('aria-pressed', String(appState.preferences.voice));
+    saveAppState();
+    pushState();
+  });
+  $('#cfgVolume').addEventListener('change', () => { appState.preferences.volume = Number($('#cfgVolume').value); saveAppState(); pushState(); });
+  $('#cfgVoiceRate').addEventListener('change', () => { appState.preferences.voiceRate = Number($('#cfgVoiceRate').value); saveAppState(); pushState(); });
+  $('#btnSpeakDay').addEventListener('click', () => {
+    if(!appState.preferences.voice){ showToast('Ative a voz em Configurações › Som e voz.'); return; }
+    speakText($('#dayContextText').textContent);
+  });
+
+  // notificações
+  $$('.toggle[data-notif]').forEach(t => t.addEventListener('click', () => {
+    const key = t.dataset.notif;
+    appState.notifications[key] = !appState.notifications[key];
+    t.setAttribute('aria-pressed', String(appState.notifications[key]));
+    saveAppState();
+    pushState();
+  }));
+  $('#btnEnableNotifications').addEventListener('click', async () => {
+    const result = await requestNotificationPermission();
+    if(result === 'granted'){ $('#notifPermHint').textContent = 'Ativadas neste navegador'; startNotificationLoop(); showToast('Notificações ativadas ✨'); }
+    else if(result === 'unsupported'){ $('#notifPermHint').textContent = 'Não suportadas neste navegador'; }
+    else { $('#notifPermHint').textContent = 'Permissão não concedida'; }
+  });
+  $('#btnSaveNotifConfig').addEventListener('click', () => {
+    appState.notifications.quietStart = $('#cfgQuietStart').value || appState.notifications.quietStart;
+    appState.notifications.quietEnd = $('#cfgQuietEnd').value || appState.notifications.quietEnd;
+    saveAppState();
+    pushState();
+    showToast('Salvo ✨');
+  });
+
+  // restaurar configurações (apenas preferências, nunca dados pessoais)
+  $('#btnRestoreSettings').addEventListener('click', () => {
+    setModal('Restaurar configurações', `<p style="color:var(--text-muted); font-size:var(--fs-sm);">Isso volta aparência, som e notificações ao padrão. Seu perfil, histórico e registros não são afetados.</p>`, `
+      <button class="btn btn--primary btn--block" id="btnConfirmRestore">Restaurar</button>
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#btnConfirmRestore').addEventListener('click', () => {
+      const fresh = defaultAppState();
+      appState.preferences = fresh.preferences;
+      appState.notifications = Object.assign({}, fresh.notifications, { water:appState.notifications.water });
+      applyTheme(appState.preferences.theme); applyMode(appState.preferences.mode);
+      applyFont(appState.preferences.fontScale); applyAnim(appState.preferences.anim);
+      populateConfigForm();
+      saveAppState(); pushSettings(); pushState();
+      closeModal();
+      showToast('Configurações restauradas.');
+    });
+  });
+
+  // apagar meus dados (nuvem) — dupla confirmação
+  $('#btnDeleteAllData').addEventListener('click', () => {
+    setModal('Apagar meus dados', `<p style="color:var(--text-muted); font-size:var(--fs-sm);">Isso remove permanentemente perfil, rotina, histórico de peso e medidas, datas especiais, registros e configurações salvos na nuvem. Esta ação não pode ser desfeita.</p>`, `
+      <button class="btn btn--danger btn--block" id="btnDeleteStep2">Continuar</button>
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#btnDeleteStep2').addEventListener('click', () => {
+      setModal('Tem certeza?', `<p style="color:var(--text-muted); font-size:var(--fs-sm);">Última confirmação: todos os seus dados na nuvem serão apagados definitivamente. Sua conta de acesso continuará existindo — para removê-la por completo, é preciso excluir o usuário diretamente no painel do Supabase.</p>`, `
+        <button class="btn btn--danger btn--block" id="btnDeleteStep3">Apagar tudo</button>
+        <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+      `);
+      $('#btnCloseModal').addEventListener('click', closeModal);
+      $('#btnDeleteStep3').addEventListener('click', async () => {
+        closeModal();
+        await deleteAllUserData();
+      });
+    });
+  });
+
+  // toggles genéricos restantes (visual, ainda não persistidos — ex: Voz, XP)
+  $$('.toggle').forEach(t => {
+    if(t.id === 'toggleAudio' || t.id === 'toggleVoice' || t.dataset.notif) return;
+    t.addEventListener('click', () => t.setAttribute('aria-pressed', String(t.getAttribute('aria-pressed') !== 'true')));
+  });
+
+  // chips genéricos (ex: dias de trabalho nas Configurações) — apenas visual até salvar
+  $$('.chip[aria-pressed]').forEach(c => {
+    if(c.closest('#modeGroup') || c.closest('#fontGroup') || c.closest('#animGroup')) return;
+    c.addEventListener('click', () => c.setAttribute('aria-pressed', String(c.getAttribute('aria-pressed') !== 'true')));
+  });
+
+  // salvar perfil
+  $('#btnSaveProfile').addEventListener('click', () => {
+    const height = $('#cfgProfileHeight').value ? Number($('#cfgProfileHeight').value) : null;
+    const weightInitial = $('#cfgProfileWeightInitial').value ? Number($('#cfgProfileWeightInitial').value) : null;
+    if((height !== null && (height <= 0 || height > 260)) || (weightInitial !== null && (weightInitial <= 0 || weightInitial > 400))){
+      showToast('Confira esse valor antes de salvar.'); return;
+    }
+    appState.profile.name = $('#cfgProfileName').value.trim();
+    appState.profile.nickname = $('#cfgProfileNickname').value.trim();
+    appState.profile.birth = $('#cfgProfileBirth').value;
+    appState.profile.sex = $('#cfgProfileSex').value;
+    appState.profile.height = height;
+    appState.profile.weightInitial = weightInitial;
+    appState.profile.note = $('#cfgProfileNote').value.trim();
+    saveAppState();
+    renderGreeting();
+    renderIMC();
+    pushProfile();
+    showToast('Salvo ✨');
+  });
+
+  // salvar objetivos
+  $('#btnSaveGoals').addEventListener('click', () => {
+    appState.goals.main = $('#cfgGoalMain').value.trim();
+    appState.goals.weightGoal = $('#cfgGoalWeight').value ? Number($('#cfgGoalWeight').value) : null;
+    appState.goals.waistGoal = $('#cfgGoalWaist').value ? Number($('#cfgGoalWaist').value) : null;
+    appState.goals.hydrationGoal = $('#cfgGoalHydration').value ? Number($('#cfgGoalHydration').value) : null;
+    appState.goals.movementGoal = $('#cfgGoalMovement').value ? Number($('#cfgGoalMovement').value) : null;
+    appState.goals.custom = $('#cfgGoalCustom').value.trim();
+    saveAppState();
+    pushState();
+    showToast('Salvo ✨');
+  });
+
+  // registrar peso
+  $('#btnAddWeight').addEventListener('click', () => {
+    const weight = $('#newWeightValue').value ? Number($('#newWeightValue').value) : null;
+    const date = $('#newWeightDate').value || todayKey();
+    if(!weight || weight <= 0 || weight > 400){ showToast('Confira esse valor antes de salvar.'); return; }
+    const entry = { id:genUUID(), weight, date, note:$('#newWeightNote').value.trim() };
+    appState.weightHistory.push(entry);
+    saveAppState();
+    renderWeightHistory(); renderIMC();
+    $('#newWeightValue').value = ''; $('#newWeightNote').value = '';
+    pushWeightEntry(entry);
+    awardXP(XP_VALUES.weightLog, 'weight');
+    showToast('Salvo ✨');
+  });
+
+  // registrar/editar medição
+  $('#btnAddMeasurement').addEventListener('click', () => {
+    const num = (v) => v === '' ? null : Number(v);
+    const vals = {
+      date: $('#measDate').value || todayKey(), waist:num($('#measWaist').value), hip:num($('#measHip').value),
+      bust:num($('#measBust').value), armRight:num($('#measArmRight').value), armLeft:num($('#measArmLeft').value),
+      thighRight:num($('#measThighRight').value), thighLeft:num($('#measThighLeft').value),
+      calfRight:num($('#measCalfRight').value), calfLeft:num($('#measCalfLeft').value), note:$('#measNote').value.trim()
+    };
+    const anyNegative = Object.entries(vals).some(([k,v]) => typeof v === 'number' && v <= 0);
+    if(anyNegative){ showToast('Confira esse valor antes de salvar.'); return; }
+    let entry;
+    const isNew = !editingMeasurementId;
+    if(editingMeasurementId){
+      entry = appState.measurementsHistory.find(m => m.id === editingMeasurementId);
+      Object.assign(entry, vals);
+    } else {
+      entry = { id:genUUID(), ...vals };
+      appState.measurementsHistory.push(entry);
+    }
+    saveAppState();
+    renderMeasurementsHistory();
+    $$('#view-config input[id^="meas"]').forEach(i => i.value = '');
+    editingMeasurementId = null;
+    $('#btnAddMeasurement').textContent = 'Salvar medição';
+    $('#btnCancelMeasurementEdit').hidden = true;
+    pushMeasurement(entry);
+    if(isNew) awardXP(XP_VALUES.measurementLog, 'measurement');
+    showToast('Salvo ✨');
+  });
+  $('#btnCancelMeasurementEdit').addEventListener('click', () => {
+    editingMeasurementId = null;
+    $$('#view-config input[id^="meas"]').forEach(i => i.value = '');
+    $('#btnAddMeasurement').textContent = 'Salvar medição';
+    $('#btnCancelMeasurementEdit').hidden = true;
+  });
+
+  // salvar rotina
+  $('#btnSaveRoutine').addEventListener('click', () => {
+    appState.routine.wake = $('#cfgWake').value;
+    appState.routine.sleep = $('#cfgSleep').value;
+    appState.routine.workStart = $('#cfgWorkStart').value;
+    appState.routine.workEnd = $('#cfgWorkEnd').value;
+    appState.routine.leaveHome = $('#cfgLeaveHome').value;
+    appState.routine.commuteMinutes = $('#cfgCommuteMinutes').value ? Number($('#cfgCommuteMinutes').value) : 0;
+    appState.routine.returnHome = $('#cfgReturnHome').value;
+    $$('#cfgWeeklySchedule select[data-day]').forEach(sel => { appState.routine.weeklySchedule[sel.dataset.day] = sel.value; });
+    saveAppState();
+    renderToday();
+    pushRoutine();
+    showToast('Salvo ✨');
+  });
+
+  // calendário: navegação de mês
+  $('#btnCalPrev').addEventListener('click', () => { calendarViewDate.setMonth(calendarViewDate.getMonth()-1); renderCalendar(); });
+  $('#btnCalNext').addEventListener('click', () => { calendarViewDate.setMonth(calendarViewDate.getMonth()+1); renderCalendar(); });
+
+  // hoje não trabalho / datas especiais / reset
+  $('#btnTodayOff').addEventListener('click', openTodayOffConfirm);
+  $('#btnOpenSpecialDates').addEventListener('click', () => renderSpecialDatesModal());
+  $('#btnResetApp').addEventListener('click', openResetConfirm);
+
+  // água (card em Hoje)
+  $$('[data-water-add]').forEach(btn => btn.addEventListener('click', () => addWater(Number(btn.dataset.waterAdd))));
+  $('#btnWaterBottle').addEventListener('click', () => addWater(appState.hydration.bottleMl));
+  $('#btnWaterCustom').addEventListener('click', openWaterCustomModal);
+
+  // alimentação: coca zero, whey, saiu da rotina, doce
+  $$('[data-coca-add]').forEach(btn => btn.addEventListener('click', () => {
+    const ml = Number(btn.dataset.cocaAdd);
+    addLogEntry('habit', 'coca_zero', null, ml, '', todayKey());
+    const total = getTodayCocaMl();
+    renderAlimentacaoView();
+    if(total > appState.nutrition.cocaZeroGoal) showToast('Hoje passou um pouco da meta. Tudo bem. Amanhã continuamos.');
+    else showToast('Salvo ✨');
+  }));
+  $('#btnWheyToday').addEventListener('click', () => {
+    if(isWheyDoneToday()){
+      const log = logsForDate(todayKey(),'habit').find(l => l.ref === 'whey');
+      if(log) removeLogEntry(log.id);
+      showToast('Sem problema, desfeito.');
+    } else {
+      addLogEntry('habit', 'whey', 'completed', null, '', todayKey());
+      showToast('Registrado ✨');
+    }
+    renderAlimentacaoView();
+  });
+  $('#btnOffRoutine').addEventListener('click', () => {
+    setModal('Hoje saiu da rotina', `<p style="color:var(--text-muted); font-size:var(--fs-sm); margin-bottom:var(--space-4);">Dia diferente acontece. Vamos simplesmente continuar.</p>`, `
+      ${['Comi fora','Comi algo diferente','Comi doce','Tomei refrigerante','Não consegui seguir o horário','Outro'].map(r => `<button class="btn btn--ghost btn--block" data-off-reason="${r}">${r}</button>`).join('')}
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Fechar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $$('[data-off-reason]').forEach(btn => btn.addEventListener('click', () => {
+      addLogEntry('habit', 'off_routine', null, null, btn.dataset.offReason, todayKey());
+      closeModal();
+      showToast('Dia diferente acontece. Vamos simplesmente continuar.');
+    }));
+  });
+  $('#btnCandyToday').addEventListener('click', () => {
+    setModal('Comi doce hoje', `<div class="field"><label>Observação (opcional)</label><input type="text" id="candyNote" placeholder="algo que queira lembrar"></div>`, `
+      <button class="btn btn--primary btn--block" id="btnConfirmCandy">Registrar</button>
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#btnConfirmCandy').addEventListener('click', () => {
+      addLogEntry('habit', 'candy', null, null, $('#candyNote').value.trim(), todayKey());
+      closeModal();
+      showToast('Registrado. Uma escolha não define o seu dia. 🍬');
+    });
+  });
+
+  // lista de compras
+  $('#btnAddShoppingItem').addEventListener('click', () => {
+    const name = $('#newShoppingItem').value.trim();
+    if(!name) return;
+    appState.nutrition.shoppingList.push({ id:genId('sl'), category:'Personalizados', name, checked:false, custom:true });
+    $('#newShoppingItem').value = '';
+    saveAppState(); renderShoppingList(); pushModuleSettings();
+  });
+
+  // movimento
+  $('#btnQuickBreak').addEventListener('click', () => {
+    addLogEntry('movement', 'active_pause', 'completed', null, '', todayKey());
+    renderMovementView(); renderToday();
+    showToast('Uma pequena pausa pode ser um bom momento para sair da tela. 🌿');
+  });
+  $('#btnAddMovement').addEventListener('click', () => {
+    const name = $('#newMovementName').value.trim();
+    if(!name) return;
+    appState.movement.activities.push({ id:genUUID(), name, description:'', custom:true });
+    $('#newMovementName').value = '';
+    saveAppState(); renderMovementView(); pushModuleSettings();
+  });
+
+  // configurações: alimentação / hidratação
+  $('#btnSaveNutritionConfig').addEventListener('click', () => {
+    appState.nutrition.cocaZeroGoal = Number($('#cfgCocaGoal').value) || 350;
+    appState.nutrition.wheyPlannedQty = Number($('#cfgWheyQty').value) || 1;
+    appState.nutrition.wheyPreferredTime = $('#cfgWheyTime').value || '16:00';
+    saveAppState();
+    if($('#view-alimentacao').classList.contains('active')) renderAlimentacaoView();
+    pushModuleSettings();
+    showToast('Salvo ✨');
+  });
+  $('#btnSaveHydrationConfig').addEventListener('click', () => {
+    appState.hydration.goalMl = Number($('#cfgWaterGoal').value) || 2000;
+    appState.hydration.bottleMl = Number($('#cfgBottleMl').value) || 800;
+    appState.hydration.cupMl = Number($('#cfgCupMl').value) || 250;
+    appState.hydration.reminderStart = $('#cfgReminderStart').value;
+    appState.hydration.reminderEnd = $('#cfgReminderEnd').value;
+    appState.hydration.reminderInterval = Number($('#cfgReminderInterval').value) || 60;
+    appState.hydration.quiet = $('#toggleWaterQuiet').getAttribute('aria-pressed') === 'true';
+    saveAppState();
+    renderWaterCard();
+    pushModuleSettings();
+    showToast('Salvo ✨');
+  });
+
+  // evolução: período
+  $$('#evoPeriodGroup .chip').forEach(btn => btn.addEventListener('click', () => {
+    evoPeriodDays = btn.dataset.period === 'all' ? 'all' : Number(btn.dataset.period);
+    $$('#evoPeriodGroup .chip').forEach(c => c.setAttribute('aria-pressed', String(c === btn)));
+    renderEvolucao();
+  }));
+
+  // modal: fechar clicando fora / Esc
+  $('#modalRoot').addEventListener('click', (e) => { if(e.target === $('#modalRoot')) closeModal(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && !$('#modalRoot').hidden) closeModal(); });
+
+  // onboarding
+  $('#btnOnboardingStart').addEventListener('click', () => goToObStep(2));
+  $$('[data-ob-back]').forEach(b => b.addEventListener('click', () => goToObStep(obStep - 1)));
+  $$('[data-ob-next]').forEach(b => b.addEventListener('click', () => goToObStep(obStep + 1)));
+  $('#btnOnboardingFinish').addEventListener('click', finishOnboarding);
+
+  // autenticação
+  $('#btnLogin').addEventListener('click', async () => {
+    setAuthError('#authLoginError', null);
+    const email = $('#authEmail').value.trim();
+    const password = $('#authPassword').value;
+    if(!email || !password){ setAuthError('#authLoginError', 'Preencha e-mail e senha.'); return; }
+    if(!supabaseClient){ setAuthError('#authLoginError', 'Supabase ainda não foi configurado neste aplicativo.'); return; }
+    const btn = $('#btnLogin'); btn.disabled = true; btn.textContent = 'Entrando…';
+    try{
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if(error){ setAuthError('#authLoginError', friendlyAuthError(error)); }
+      // sucesso: onAuthStateChange cuida da transição
+    }catch(e){
+      console.error('Erro ao entrar:', e);
+      setAuthError('#authLoginError', friendlyAuthError(e));
+    }finally{ btn.disabled = false; btn.textContent = 'Entrar'; }
+  });
+  $('#btnGoForgot').addEventListener('click', () => { setAuthError('#authLoginError', null); showAuthStep('forgot'); });
+  $('#btnBackToLogin').addEventListener('click', () => { setAuthError('#authForgotError', null); showAuthStep('login'); });
+  $('#btnSendForgot').addEventListener('click', async () => {
+    setAuthError('#authForgotError', null);
+    const email = $('#forgotEmail').value.trim();
+    if(!email){ setAuthError('#authForgotError', 'Informe seu e-mail.'); return; }
+    if(!supabaseClient){ setAuthError('#authForgotError', 'Supabase ainda não foi configurado neste aplicativo.'); return; }
+    const btn = $('#btnSendForgot'); btn.disabled = true; btn.textContent = 'Enviando…';
+    try{
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+      if(error){ setAuthError('#authForgotError', friendlyAuthError(error)); }
+      else{ showToast('Se esse e-mail existir, enviaremos um link em instantes.'); showAuthStep('login'); }
+    }catch(e){ console.error('Erro ao solicitar recuperação:', e); setAuthError('#authForgotError', friendlyAuthError(e)); }
+    finally{ btn.disabled = false; btn.textContent = 'Enviar link'; }
+  });
+
+  // logout
+  $('#btnLogout').addEventListener('click', () => {
+    setModal('Encerrar sessão', `
+      <p style="color:var(--text-muted); font-size:var(--fs-sm);">Você deseja realmente encerrar sua sessão neste dispositivo?</p>
+    `, `
+      <button class="btn btn--danger btn--block" id="btnConfirmLogout">Encerrar sessão</button>
+      <button class="btn btn--ghost btn--block" id="btnCloseModal">Cancelar</button>
+    `);
+    $('#btnCloseModal').addEventListener('click', closeModal);
+    $('#btnConfirmLogout').addEventListener('click', async () => {
+      closeModal();
+      try{ if(supabaseClient) await supabaseClient.auth.signOut(); }
+      catch(e){ console.error('Erro ao encerrar sessão:', e); }
+      // onAuthStateChange (SIGNED_OUT) cuida da limpeza e retorno à tela de login
+    });
+  });
+
+  // conexão
+  window.addEventListener('online', () => { if(authState.status === 'authenticated') pushState(); setSyncStatus('online'); });
+  window.addEventListener('offline', () => setSyncStatus('offline'));
+}
+
+/* =========================================================================
+   FLUXO DE AUTENTICAÇÃO
+   ========================================================================= */
+function onSignedOut(){
+  authState.status = 'unauthenticated';
+  authState.user = null;
+  appInitialized = false;
+  appState = defaultAppState(); // limpa estado sensível em memória (dados no Supabase permanecem intactos)
+  setAuthError('#authLoginError', null);
+  $('#authEmail').value = ''; $('#authPassword').value = '';
+  showAuthStep('login');
+}
+async function onAuthenticated(user){
+  authState.status = 'authenticated';
+  authState.user = user;
+  $('#accountEmailHint').textContent = user.email || '—';
+  if(appInitialized) return; // evita reinicializar em eventos redundantes (TOKEN_REFRESHED etc.)
+  appInitialized = true;
+  await syncFromRemoteOnLogin();
+  applyTheme(appState.preferences.theme);
+  applyMode(appState.preferences.mode);
+  applyFont(appState.preferences.fontScale);
+  applyAnim(appState.preferences.anim);
+  renderGreeting();
+  renderToday();
+  populateConfigForm();
+  switchView(STATE.view);
+  if(!appState.meta.onboarded) $('#onboardingRoot').hidden = false;
+  $('#authRoot').hidden = true;
+  checkAchievements();
+  if('Notification' in window && Notification.permission === 'granted') startNotificationLoop();
+}
+async function checkSession(){
+  supabaseClient = initSupabase();
+  if(!supabaseClient){
+    // Supabase não configurado — segue em modo local, sem exigir login
+    authState.status = 'authenticated';
+    authState.user = { id:'local-only', email:'' };
+    appInitialized = true;
+    applyTheme(appState.preferences.theme);
+    applyMode(appState.preferences.mode);
+    applyFont(appState.preferences.fontScale);
+    applyAnim(appState.preferences.anim);
+    renderGreeting(); renderToday(); populateConfigForm(); switchView(STATE.view);
+    if(!appState.meta.onboarded) $('#onboardingRoot').hidden = false;
+    $('#authRoot').hidden = true;
+    setSyncStatus('offline');
+    checkAchievements();
+    if('Notification' in window && Notification.permission === 'granted') startNotificationLoop();
+    return;
+  }
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if(event === 'SIGNED_IN' && session && session.user) onAuthenticated(session.user);
+    if(event === 'SIGNED_OUT') onSignedOut();
+  });
+  try{
+    const { data, error } = await supabaseClient.auth.getSession();
+    if(error) throw error;
+    if(data && data.session && data.session.user) await onAuthenticated(data.session.user);
+    else showAuthStep('login');
+  }catch(e){
+    console.error('Falha ao verificar sessão:', e);
+    showAuthStep('login');
+  }
+}
+
+/* =========================================================================
+   PWA — REGISTRO DO SERVICE WORKER
+   Não bloqueante: roda após o load, nunca atrasa a primeira renderização.
+   ========================================================================= */
+function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((e) => {
+      console.error('Falha ao registrar Service Worker:', e); // não crítico: o app funciona normalmente sem ele
+    });
+  });
+}
+
+/* =========================================================================
+   INICIALIZAÇÃO
+   ========================================================================= */
+function init(){
+  bindEvents();
+  setSyncStatus(navigator.onLine ? 'offline' : 'offline'); // estado inicial neutro até autenticar
+  checkSession();
+  registerServiceWorker();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+
+</body>
+</html>
